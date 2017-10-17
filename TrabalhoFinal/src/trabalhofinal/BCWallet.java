@@ -57,18 +57,25 @@ public class BCWallet {
             System.out.println("Looking for Peers");
 
             Date date = new Date();
-            
+
             socket.setSoTimeout(1000);
-            
+
             long currentTime = date.getTime();
 
-            long startTime = currentTime;
+            long startTime = date.getTime();
 
             while (currentTime - startTime < timeup * 1000) {
-                //Wait for a response
+                System.out.println("Waiting for a response");
                 byte[] recvBuf = new byte[15000];
                 DatagramPacket receivePacket = new DatagramPacket(recvBuf, recvBuf.length);
-                socket.receive(receivePacket);
+                try {
+                    socket.receive(receivePacket);
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                    currentTime = new Date().getTime();
+                    System.out.println("End Cycle:" + ((currentTime - startTime) / 1000));
+                    continue;
+                }
 
                 //We have a response
                 System.out.println("Broadcast response: " + new String(receivePacket.getData()).trim() + " " + receivePacket.getAddress().getHostAddress());
@@ -81,9 +88,9 @@ public class BCWallet {
                     peers.add((Inet4Address) receivePacket.getAddress());
                     System.out.println("Peer acknowledged: " + ((Inet4Address) receivePacket.getAddress()).getHostAddress());
                 }
-                
-                currentTime = date.getTime();
-                
+
+                currentTime = new Date().getTime();
+                System.out.println("End Cycle:" + ((currentTime - startTime) / 1000));
             }
 
         } catch (NoSuchAlgorithmException | HeadlessException | IOException ex) {
