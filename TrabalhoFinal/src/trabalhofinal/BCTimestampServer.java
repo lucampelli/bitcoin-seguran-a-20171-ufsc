@@ -32,7 +32,8 @@ public class BCTimestampServer implements Runnable {
 
     public static BCTimestampServer INSTANCE;
 
-    private DatagramSocket socket;
+    private DatagramSocket socketRec;
+    private DatagramSocket socketSend;
 
     public static BCTimestampServer getInstance() {
         if (INSTANCE == null) {
@@ -43,8 +44,9 @@ public class BCTimestampServer implements Runnable {
 
     BCTimestampServer() {
         try {
-            socket = new DatagramSocket(8888, InetAddress.getByName("0.0.0.0"));
-            socket.setBroadcast(true);
+            socketRec = new DatagramSocket(8888, InetAddress.getByName("0.0.0.0"));
+            socketRec.setBroadcast(true);
+            socketSend = new DatagramSocket(8889, InetAddress.getByName("0.0.0.0"));
             
         } catch (SocketException | UnknownHostException e){
             e.printStackTrace();
@@ -53,21 +55,21 @@ public class BCTimestampServer implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("Server address:" + socket.getLocalAddress().getHostAddress());
+        System.out.println("Server address:" + socketRec.getLocalAddress().getHostAddress());
         while(true){
             try {
                 System.out.println(getClass().getName() + " is ready to receive requests");
                 
                 byte[] recBuf = new byte[15000];
                 DatagramPacket packet = new DatagramPacket(recBuf, recBuf.length);
-                socket.receive(packet);
+                socketRec.receive(packet);
                 
                 //packet received
                 
                 System.out.println("Received Packet from:" + packet.getAddress().getHostAddress());
                 System.out.println("Saying:" + new String(packet.getData()));
                 
-                Thread response = new Thread(new BCServerHandler(packet));
+                Thread response = new Thread(new BCServerHandler(packet, socketSend));
                 response.start();
                 
                 System.out.println("Sent");

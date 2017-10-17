@@ -24,8 +24,8 @@ public class BCServerHandler implements Runnable{
     String response = "";
     String command = "";
     
-    public BCServerHandler(DatagramPacket comPacket) throws SocketException, UnknownHostException{        
-        this.socket = new DatagramSocket(8889, InetAddress.getByName("0.0.0.0"));
+    public BCServerHandler(DatagramPacket comPacket, DatagramSocket socket) throws SocketException, UnknownHostException{        
+        this.socket = socket;
         this.commPacket = comPacket;
     }
 
