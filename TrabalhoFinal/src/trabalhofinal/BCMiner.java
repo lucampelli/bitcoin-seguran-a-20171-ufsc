@@ -40,7 +40,7 @@ public class BCMiner extends BCClient{
         try {
             
             hashID = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((new Date().getTime() + "" + MouseInfo.getPointerInfo().getLocation().x + "" + MouseInfo.getPointerInfo().getLocation().y).getBytes()));
-            System.out.println("Your ID:" + hashID);
+            System.out.println("Your Miner ID:" + hashID);
             
             peers = new ArrayList();
             pending = new ArrayList();
@@ -101,6 +101,7 @@ public class BCMiner extends BCClient{
         } catch (NoSuchAlgorithmException | HeadlessException | IOException ex) {
         }
 
+        new Thread(new BCMinerSocket(this)).start();
         
         
     }
@@ -131,7 +132,7 @@ public class BCMiner extends BCClient{
     }
     
     public void proofOfWork(){
-        //Take some time....
+        //Take some time
     }
     
     public void receiveBlockValidatedRequest(Block b){

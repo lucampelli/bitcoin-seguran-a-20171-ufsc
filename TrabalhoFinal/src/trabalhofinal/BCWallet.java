@@ -42,7 +42,7 @@ public class BCWallet extends BCClient {
         try {
             balance = 0;
             hashID = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((new Date().getTime() + "" + MouseInfo.getPointerInfo().getLocation().x + "" + MouseInfo.getPointerInfo().getLocation().y).getBytes()));
-            System.out.println("Your ID:" + hashID);
+            System.out.println("Your Wallet ID:" + hashID);
 
             peers = new ArrayList();
             myTransactions = new ArrayList<>();
@@ -106,6 +106,11 @@ public class BCWallet extends BCClient {
 
         new Thread(new BCClientSocket(this)).start();
 
+    }
+    
+    public float getBalanceFromChain(){
+        //TODO
+        return 0;
     }
 
     public void createTransaction(String targetHash, float value) {
