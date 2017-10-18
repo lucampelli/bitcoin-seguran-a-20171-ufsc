@@ -10,28 +10,22 @@ import java.awt.MouseInfo;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import sun.text.normalizer.Utility;
 
 /**
  *
  * @author luca
  */
-public class BCWallet {
-
-    private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
+public class BCWallet extends BCClient{
 
     private BlockChain chain;
 
-    private Inet4Address server;
-    private ArrayList<Inet4Address> peers;
+    private InetAddress server;
+    private ArrayList<InetAddress> peers;
 
     private String hashID = "";
 
@@ -44,8 +38,10 @@ public class BCWallet {
     public BCWallet() {
         try {
             balance = 0;
-            hashID = bytesToHex(MessageDigest.getInstance("SHA-512").digest((new Date().getTime() + "" + MouseInfo.getPointerInfo().getLocation().x + "" + MouseInfo.getPointerInfo().getLocation().y).getBytes()));
+            hashID = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((new Date().getTime() + "" + MouseInfo.getPointerInfo().getLocation().x + "" + MouseInfo.getPointerInfo().getLocation().y).getBytes()));
             System.out.println("Your ID:" + hashID);
+            
+            peers = new ArrayList();
 
             socket = new DatagramSocket();
             socket.setBroadcast(true);
@@ -54,7 +50,7 @@ public class BCWallet {
             DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.SERVERRECEIVEPORT); // broadcast for peers and server
             socket.send(packet);
 
-            System.out.println("Looking for Peers");
+            System.out.println("Looking for Peers: " + socket.getLocalAddress());
 
             Date date = new Date();
 
@@ -81,12 +77,12 @@ public class BCWallet {
                 System.out.println("Broadcast response: " + new String(receivePacket.getData()).trim() + " " + receivePacket.getAddress().getHostAddress());
 
                 if (new String(receivePacket.getData()).trim().equals(BCTimestampServer.SERVERDISCOVERYRESPONSE + "")) {
-                    server = (Inet4Address) receivePacket.getAddress();
-                    System.out.println("Server acknowledged: " + ((Inet4Address) receivePacket.getAddress()).getHostAddress());
+                    server = receivePacket.getAddress();
+                    System.out.println("Server acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
                 if (new String(receivePacket.getData()).trim().equals(BCTimestampServer.PEERRESPONSE + "")) {
-                    peers.add((Inet4Address) receivePacket.getAddress());
-                    System.out.println("Peer acknowledged: " + ((Inet4Address) receivePacket.getAddress()).getHostAddress());
+                    peers.add(receivePacket.getAddress());
+                    System.out.println("Peer acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
 
                 currentTime = new Date().getTime();
@@ -98,14 +94,25 @@ public class BCWallet {
 
     }
 
-    public static String bytesToHex(byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-        for (int j = 0; j < bytes.length; j++) {
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = hexArray[v >>> 4];
-            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+    @Override
+    public void addPeer(InetAddress address) {
+        System.out.println("Receiving peer");
+        peers.add(address);
+        ArrayList<InetAddress> toRemove = new ArrayList();
+        for(InetAddress c : peers){
+            try {
+                System.out.println(c.toString());
+                if(!c.isReachable(1)){
+                    toRemove.add(c);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
-        return new String(hexChars);
+        for(InetAddress c : toRemove){
+            peers.remove(c);
+        }
+        toRemove.clear();
     }
 
 }

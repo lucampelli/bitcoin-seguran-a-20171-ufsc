@@ -17,15 +17,18 @@ import java.net.UnknownHostException;
  * @author luca
  */
 public class BCTimestampServer implements Runnable {
+
+    
+    private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
     
     public final static short SERVERRECEIVEPORT = 8888;
-    
+
     public final static short DISCOVERY = 1;
     public final static short ASKFORCHAIN = 2;
     public final static short TRANSACTIONSTARTBROADCAST = 3;
     public final static short TRANSACTIONCONFIRMEDBROADCAST = 4;
     public final static short TRANSACTIONDENIEDBROADCAST = 5;
-    
+
     public final static short SERVERDISCOVERYRESPONSE = 10;
     public final static short CHAINRESPONSE = 20;
     public final static short PEERRESPONSE = 30;
@@ -47,8 +50,8 @@ public class BCTimestampServer implements Runnable {
             socketRec = new DatagramSocket(8888, InetAddress.getByName("0.0.0.0"));
             socketRec.setBroadcast(true);
             socketSend = new DatagramSocket(8889, InetAddress.getByName("0.0.0.0"));
-            
-        } catch (SocketException | UnknownHostException e){
+
+        } catch (SocketException | UnknownHostException e) {
             e.printStackTrace();
         }
     }
@@ -56,31 +59,38 @@ public class BCTimestampServer implements Runnable {
     @Override
     public void run() {
         System.out.println("Server address:" + socketRec.getLocalAddress().getHostAddress());
-        while(true){
+        while (true) {
             try {
                 System.out.println(getClass().getName() + " is ready to receive requests");
-                
+
                 byte[] recBuf = new byte[15000];
                 DatagramPacket packet = new DatagramPacket(recBuf, recBuf.length);
                 socketRec.receive(packet);
-                
+
                 //packet received
-                
                 System.out.println("Received Packet from:" + packet.getAddress().getHostAddress());
                 System.out.println("Saying:" + new String(packet.getData()));
-                
+
                 Thread response = new Thread(new BCServerHandler(packet, socketSend));
                 response.start();
-                
+
                 System.out.println("Sent");
-                
+
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
-            
-            
-            
+
         }
+    }
+
+    public static String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for (int j = 0; j < bytes.length; j++) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
     }
 
 }
