@@ -15,6 +15,7 @@ import java.net.UnknownHostException;
 /**
  *
  * @author luca
+ * Servidor timesstamp que mantém uma cópia atualizada da blockchain
  */
 public class BCTimestampServer implements Runnable {
 

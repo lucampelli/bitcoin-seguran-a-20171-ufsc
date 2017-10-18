@@ -10,6 +10,7 @@ import java.util.HashMap;
 /**
  *
  * @author luca
+ * A Blockchain em si
  */
 public class BlockChain {
     

@@ -12,6 +12,7 @@ import java.net.InetAddress;
 /**
  *
  * @author luca
+ * Thread para receber broadcasts de descoberta de outros peers
  */
 public class BCClientSocket implements Runnable {
 

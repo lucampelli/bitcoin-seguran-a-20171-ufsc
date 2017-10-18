@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 /**
  *
  * @author luca
+ * Thread que cuida de responder as mensagens do servidor 
  */
 public class BCServerHandler implements Runnable{
     
