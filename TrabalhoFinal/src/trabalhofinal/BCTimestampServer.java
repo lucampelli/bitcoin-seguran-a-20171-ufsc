@@ -35,6 +35,7 @@ public class BCTimestampServer implements Runnable {
     public final static short SERVERDISCOVERYRESPONSE = 10;
     public final static short CHAINRESPONSE = 20;
     public final static short PEERRESPONSE = 30;
+    public final static short MINERRESPONSE = 40;
 
     public static BCTimestampServer INSTANCE;
 
