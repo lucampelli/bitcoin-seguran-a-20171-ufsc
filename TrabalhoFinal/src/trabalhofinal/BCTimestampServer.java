@@ -23,6 +23,8 @@ public class BCTimestampServer implements Runnable {
     private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
     
     public final static short SERVERRECEIVEPORT = 8888;
+    public final static short MINERRECEIVEPORT = 8890;
+    public final static short WALLETRECEIVEPORT = 8891;
 
     public final static short DISCOVERY = 1;
     public final static short ASKFORCHAIN = 2;

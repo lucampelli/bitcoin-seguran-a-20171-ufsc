@@ -26,7 +26,7 @@ public class BCClientSocket implements Runnable {
     @Override
     public void run() {
         try {
-            socket = new DatagramSocket(BCTimestampServer.SERVERRECEIVEPORT,InetAddress.getByName("0.0.0.0"));
+            socket = new DatagramSocket(BCTimestampServer.WALLETRECEIVEPORT,InetAddress.getByName("0.0.0.0"));
             socket.setBroadcast(true);
             while (true) {
                 byte[] buf = new byte[15000];

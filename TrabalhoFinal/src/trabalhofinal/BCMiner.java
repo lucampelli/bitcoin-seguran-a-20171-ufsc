@@ -51,8 +51,8 @@ public class BCMiner extends BCClient{
             byte[] data = (BCTimestampServer.DISCOVERY + "").getBytes();
             DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.SERVERRECEIVEPORT); // broadcast for peers and server
             
-            DatagramPacket packet1 = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.SERVERRECEIVEPORT + 1);// para conseguir testar em um computador só
-            DatagramPacket packet2 = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.SERVERRECEIVEPORT + 2);
+            DatagramPacket packet1 = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.MINERRECEIVEPORT);// para conseguir testar em um computador só
+            DatagramPacket packet2 = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.WALLETRECEIVEPORT);
             
             socket.send(packet);
             
@@ -95,7 +95,7 @@ public class BCMiner extends BCClient{
                 }
 
                 currentTime = new Date().getTime();
-                System.out.println("End Cycle:" + ((currentTime - startTime) / 1000));
+                System.out.println("End Cycle:" + ((currentTime - startTime) / 1000.0));
             }
 
         } catch (NoSuchAlgorithmException | HeadlessException | IOException ex) {
@@ -127,7 +127,7 @@ public class BCMiner extends BCClient{
         toRemove.clear();
     }
     
-    public void reciveBlockValidationRequest(Block b){
+    public void receiveBlockValidationRequest(Block b){
         pending.add(b);
     }
     

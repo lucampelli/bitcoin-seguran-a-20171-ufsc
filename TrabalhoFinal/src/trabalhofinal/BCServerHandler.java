@@ -47,8 +47,7 @@ public class BCServerHandler implements Runnable{
         try {
             socket.send(sendPacket);
             System.out.println("Server sent response " + new String(sendPacket.getData()) + " to " + sendPacket.getAddress().getHostAddress());
-            socket.close();
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
     }

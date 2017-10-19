@@ -5,6 +5,7 @@
  */
 package trabalhofinal;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -15,13 +16,26 @@ import java.util.HashMap;
 public class BlockChain {
     
     HashMap<String, Block> chain = new HashMap<>();
+    HashMap<String, ArrayList<Block>> IDchain = new HashMap<>();
     
     public void addBlock(Block block){
         chain.put(block.Hash(), block);
+        if(IDchain.containsKey(block.ID())){
+            ArrayList<Block> temp = IDchain.get(block.ID());
+            temp.add(block);
+        } else {
+            ArrayList<Block> temp = new ArrayList();
+            temp.add(block);
+            IDchain.put(block.ID(), temp);
+        }
     }
     
     public Block getBlockByHash(String hash){
         return chain.get(hash);
+    }
+    
+    public ArrayList<Block> getBlocksByID(String ID){
+        return IDchain.get(ID);
     }
     
     

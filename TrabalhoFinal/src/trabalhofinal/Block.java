@@ -68,6 +68,10 @@ public class Block {
     public String Hash() {
         return this.hash;
     }
+    
+    public String ID(){
+        return this.blockOwnerID;
+    }
 
     @Override
     public String toString() {
