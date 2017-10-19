@@ -32,6 +32,10 @@ public class BlockChain {
         }
     }
     
+    public Block Head(){
+        return head;
+    }
+    
     public Block getBlockByHash(String hash){
         return chain.get(hash);
     }
