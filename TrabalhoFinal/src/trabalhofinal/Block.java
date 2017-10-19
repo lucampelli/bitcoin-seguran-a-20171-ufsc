@@ -26,6 +26,15 @@ public class Block {
     private float value;
     private float change;
 
+    /**
+     * Normal Block
+     * @param owner
+     * @param target
+     * @param time
+     * @param previous
+     * @param fundBlock
+     * @param value 
+     */
     public Block(String owner, String target, Date time, String previous, Block fundBlock, float value) {
         try {
             this.blockOwnerID = owner;
@@ -40,10 +49,37 @@ public class Block {
             System.out.println("Block Error: " + ex.getMessage());
         }
     }
+    
+    /**
+     * MatrixBlock
+     * @param owner
+     * @param target
+     * @param time
+     * @param value 
+     */
+    public Block(String owner, String target, Date time, float value){
+        try {
+            this.blockOwnerID = owner;
+            this.targetID = target;
+            this.timeStamp = time;
+            this.previousHash = "";
+            this.fundBlock = null;
+            this.value = value;
+            this.change = 0;
+            this.hash = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((this.blockOwnerID + this.targetID + this.timeStamp.toString() + this.previousHash).getBytes()));
+        } catch (NoSuchAlgorithmException ex) {
+            System.out.println("Block Error: " + ex.getMessage());
+        }
+    }
 
+    /**
+     * Normal Block Parse from String
+     * @param data 
+     */
     public Block(String data) {
         try {
             String[] split = data.trim().split(" ");
+            System.out.println(split.length);
             if (split.length != 8) {
                 throw new Exception("New Block Wrong Data Length");
             }

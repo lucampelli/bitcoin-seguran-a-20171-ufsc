@@ -11,23 +11,22 @@ import java.net.InetAddress;
 
 /**
  *
- * @author luca
- * Thread para os mineradores receberem broadcasts de novos blocos e peers
+ * @author luca Thread para os mineradores receberem broadcasts de novos blocos
+ * e peers
  */
-
 public class BCMinerSocket implements Runnable {
 
     DatagramSocket socket;
     BCMiner client;
-    
-    public BCMinerSocket(BCMiner c){
+
+    public BCMinerSocket(BCMiner c) {
         this.client = c;
     }
 
     @Override
     public void run() {
         try {
-            socket = new DatagramSocket(BCTimestampServer.MINERRECEIVEPORT,InetAddress.getByName("0.0.0.0"));
+            socket = new DatagramSocket(BCTimestampServer.MINERRECEIVEPORT, InetAddress.getByName("0.0.0.0"));
             socket.setBroadcast(true);
             while (true) {
                 byte[] buf = new byte[15000];
@@ -35,17 +34,20 @@ public class BCMinerSocket implements Runnable {
                 socket.receive(p);
 
                 byte[] r;
-                //Change
-                if (new String(p.getData()).trim().equals(BCTimestampServer.DISCOVERY + "")) {
+
+                String inst = new String(p.getData()).trim().split("|")[0];
+
+                if (inst.equals(BCTimestampServer.DISCOVERY + "")) {
                     System.out.println("Client Received Discovery");
                     client.addPeer(p.getAddress());
                     r = (BCTimestampServer.MINERRESPONSE + "").getBytes();
                     DatagramPacket response = new DatagramPacket(r, r.length, p.getAddress(), p.getPort());
                     socket.send(response);
                 }
-                if (new String(p.getData()).trim().equals(BCTimestampServer.TRANSACTIONSTARTBROADCAST + "")) {
+                if (inst.equals(BCTimestampServer.TRANSACTIONSTARTBROADCAST + "")) {
+                    String data = new String(p.getData()).trim().split("|")[1];
                     System.out.println("Miner Received New Transaction");
-                    client.receiveBlockValidationRequest(new Block("DATA TO BE FORMULATED"));
+                    client.receiveBlockValidationRequest(new Block(data));
                 }
 
             }

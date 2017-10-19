@@ -41,7 +41,9 @@ public class BCWallet extends BCClient {
     public BCWallet() {
         try {
             balance = 0;
-            hashID = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((new Date().getTime() + "" + MouseInfo.getPointerInfo().getLocation().x + "" + MouseInfo.getPointerInfo().getLocation().y).getBytes()));
+            //hashID = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((new Date().getTime() + "" + MouseInfo.getPointerInfo().getLocation().x + "" + MouseInfo.getPointerInfo().getLocation().y).getBytes()));
+            hashID = "AC84B32E9D61A4422D1F7AABEF96C326CD2BDD61BFDBF46C2E193EC645B1CA40DD72662FD25B194A1403EDF76B80D18042A220C4DC97966DE718E37F64FFCF9B";
+            
             System.out.println("Your Wallet ID:" + hashID);
 
             miners = new ArrayList();
@@ -101,33 +103,51 @@ public class BCWallet extends BCClient {
                 System.out.println("End Cycle:" + ((currentTime - startTime) / 1000.0));
             }
 
-        } catch (NoSuchAlgorithmException | HeadlessException | IOException ex) {
+        } catch (Exception ex) {
         }
 
         new Thread(new BCClientSocket(this)).start();
         
-        String target = "";
+        String target = "AC84B32E9D61A4422D1F7AABEF96C326CD2BDD61BFDBF46C2E193EC645B1CA40DD72662FD25B194A1403EDF76B80D18042A220C4DC97966DE718E37F64FFCF9A";
+        
+        chain = getBlockchainFromServer();
         
         createTransaction(target, 1.0f);
 
     }
     
-    public float getBalanceFromChain(){
-        //TODO
-        return 0;
+    public float getBalance(){
+        float sum = 0;
+        for(Block b : myTransactions){
+            sum += b.Value();
+        }
+        return sum;
     }
+    
+    public Block SearchValidFundBlock(float value){
+        for(Block b : myTransactions){
+            if(b.Value() >= value){
+                return b;
+            }
+        }
+        return chain.head;
+    }
+    
 
     public void createTransaction(String targetHash, float value) {
         try {
-            //TODO new Block()
-            //BroadCast
-            byte[] data = (BCTimestampServer.TRANSACTIONSTARTBROADCAST + "").getBytes(); //TODO este é o bloco
             
-            DatagramPacket p = new DatagramPacket(data, data.length, server, BCTimestampServer.SERVERRECEIVEPORT);
-            socket.send(p);
+            Block b = new Block(this.hashID, targetHash, new Date(), chain.Head().Hash(),
+                    SearchValidFundBlock(value),value);
+            
+            //BroadCast
+            byte[] data = (BCTimestampServer.TRANSACTIONSTARTBROADCAST + "|" + b.toString()).getBytes();
+            
+            DatagramPacket p;
             
             for (InetAddress a : miners) {
-                p = new DatagramPacket(data, data.length, a, BCTimestampServer.SERVERRECEIVEPORT);
+                p = new DatagramPacket(data, data.length, a, BCTimestampServer.MINERRECEIVEPORT);
+                System.out.println("New Block");
                 socket.send(p);
             }
         } catch (IOException ex) {
@@ -138,6 +158,9 @@ public class BCWallet extends BCClient {
     @Override
     public void addPeer(InetAddress address) {
         System.out.println("Receiving peer");
+        if(miners.contains(address)){
+            return;
+        }
         miners.add(address);
         ArrayList<InetAddress> toRemove = new ArrayList();
         for (InetAddress c : miners) {
@@ -154,6 +177,11 @@ public class BCWallet extends BCClient {
             miners.remove(c);
         }
         toRemove.clear();
+    }
+
+    private BlockChain getBlockchainFromServer() {
+        //TODO mudar para pegar do server mesmo
+        return new BlockChain();
     }
 
 }
