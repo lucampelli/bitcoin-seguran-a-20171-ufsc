@@ -39,7 +39,7 @@ public class BCMinerSocket implements Runnable {
                 if (new String(p.getData()).trim().equals(BCTimestampServer.DISCOVERY + "")) {
                     System.out.println("Client Received Discovery");
                     client.addPeer(p.getAddress());
-                    r = (BCTimestampServer.PEERRESPONSE + "").getBytes();
+                    r = (BCTimestampServer.MINERRESPONSE + "").getBytes();
                     DatagramPacket response = new DatagramPacket(r, r.length, p.getAddress(), p.getPort());
                     socket.send(response);
                 }

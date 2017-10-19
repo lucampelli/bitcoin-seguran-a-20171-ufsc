@@ -17,8 +17,10 @@ public class BlockChain {
     
     HashMap<String, Block> chain = new HashMap<>();
     HashMap<String, ArrayList<Block>> IDchain = new HashMap<>();
+    Block head;
     
     public void addBlock(Block block){
+        head = block;
         chain.put(block.Hash(), block);
         if(IDchain.containsKey(block.ID())){
             ArrayList<Block> temp = IDchain.get(block.ID());

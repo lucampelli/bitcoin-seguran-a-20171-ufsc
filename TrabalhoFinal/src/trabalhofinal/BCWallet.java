@@ -28,7 +28,7 @@ public class BCWallet extends BCClient {
     private ArrayList<Block> myTransactions;
 
     private InetAddress server;
-    private ArrayList<InetAddress> peers;
+    private ArrayList<InetAddress> miners;
 
     private String hashID = "";
 
@@ -44,7 +44,7 @@ public class BCWallet extends BCClient {
             hashID = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((new Date().getTime() + "" + MouseInfo.getPointerInfo().getLocation().x + "" + MouseInfo.getPointerInfo().getLocation().y).getBytes()));
             System.out.println("Your Wallet ID:" + hashID);
 
-            peers = new ArrayList();
+            miners = new ArrayList();
             myTransactions = new ArrayList<>();
 
             socket = new DatagramSocket();
@@ -92,8 +92,8 @@ public class BCWallet extends BCClient {
                     server = receivePacket.getAddress();
                     System.out.println("Server acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
-                if (new String(receivePacket.getData()).trim().equals(BCTimestampServer.PEERRESPONSE + "")) {
-                    peers.add(receivePacket.getAddress());
+                if (new String(receivePacket.getData()).trim().equals(BCTimestampServer.MINERRESPONSE + "")) {
+                    miners.add(receivePacket.getAddress());
                     System.out.println("Peer acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
 
@@ -105,6 +105,10 @@ public class BCWallet extends BCClient {
         }
 
         new Thread(new BCClientSocket(this)).start();
+        
+        String target = "";
+        
+        createTransaction(target, 1.0f);
 
     }
     
@@ -122,7 +126,7 @@ public class BCWallet extends BCClient {
             DatagramPacket p = new DatagramPacket(data, data.length, server, BCTimestampServer.SERVERRECEIVEPORT);
             socket.send(p);
             
-            for (InetAddress a : peers) {
+            for (InetAddress a : miners) {
                 p = new DatagramPacket(data, data.length, a, BCTimestampServer.SERVERRECEIVEPORT);
                 socket.send(p);
             }
@@ -134,9 +138,9 @@ public class BCWallet extends BCClient {
     @Override
     public void addPeer(InetAddress address) {
         System.out.println("Receiving peer");
-        peers.add(address);
+        miners.add(address);
         ArrayList<InetAddress> toRemove = new ArrayList();
-        for (InetAddress c : peers) {
+        for (InetAddress c : miners) {
             try {
                 System.out.println(c.toString());
                 if (!c.isReachable(1)) {
@@ -147,7 +151,7 @@ public class BCWallet extends BCClient {
             }
         }
         for (InetAddress c : toRemove) {
-            peers.remove(c);
+            miners.remove(c);
         }
         toRemove.clear();
     }
