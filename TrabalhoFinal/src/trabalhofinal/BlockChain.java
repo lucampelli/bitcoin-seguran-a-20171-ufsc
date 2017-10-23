@@ -16,9 +16,9 @@ import java.util.HashMap;
  */
 public class BlockChain {
     
-    HashMap<String, Block> chain = new HashMap<>();
-    HashMap<String, ArrayList<Block>> IDchain = new HashMap<>();
-    Block head;
+    private HashMap<String, Block> chain = new HashMap<>();
+    private HashMap<String, ArrayList<Block>> IDchain = new HashMap<>();
+    private Block head;
     
     public BlockChain(){
         Block matrixBlock = new Block("", "AC84B32E9D61A4422D1F7AABEF96C326CD2BDD61BFDBF46C2E193EC645B1CA40DD72662FD25B194A1403EDF76B80D18042A220C4DC97966DE718E37F64FFCF9B",

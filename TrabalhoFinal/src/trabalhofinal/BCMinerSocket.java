@@ -5,6 +5,7 @@
  */
 package trabalhofinal;
 
+import static java.lang.Thread.yield;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -27,29 +28,36 @@ public class BCMinerSocket implements Runnable {
     public void run() {
         try {
             socket = new DatagramSocket(BCTimestampServer.MINERRECEIVEPORT, InetAddress.getByName("0.0.0.0"));
+            socket.setSoTimeout(1000);
             socket.setBroadcast(true);
             while (true) {
                 byte[] buf = new byte[15000];
                 DatagramPacket p = new DatagramPacket(buf, buf.length);
-                socket.receive(p);
-
+                try {
+                    socket.receive(p);
+                } catch(Exception e){
+                    
+                }
+                
                 byte[] r;
 
-                String inst = new String(p.getData()).trim().split("|")[0];
+                String[] data = new String(p.getData()).trim().split(":");
 
-                if (inst.equals(BCTimestampServer.DISCOVERY + "")) {
+                System.out.println("DATA: " + data[0]);
+
+                if (data[0].equals(BCTimestampServer.DISCOVERY + "")) {
                     System.out.println("Client Received Discovery");
                     client.addPeer(p.getAddress());
                     r = (BCTimestampServer.MINERRESPONSE + "").getBytes();
                     DatagramPacket response = new DatagramPacket(r, r.length, p.getAddress(), p.getPort());
                     socket.send(response);
                 }
-                if (inst.equals(BCTimestampServer.TRANSACTIONSTARTBROADCAST + "")) {
-                    String data = new String(p.getData()).trim().split("|")[1];
-                    System.out.println("Miner Received New Transaction");
-                    client.receiveBlockValidationRequest(new Block(data));
+                if (data[0].equals(BCTimestampServer.TRANSACTIONSTARTBROADCAST + "")) {
+                    System.out.println("Miner Received New Transaction ");
+                    client.receiveBlockValidationRequest(new Block(data[1]));
                 }
 
+                yield();
             }
         } catch (Exception ex) {
             ex.printStackTrace();

@@ -5,14 +5,11 @@
  */
 package trabalhofinal;
 
-import java.awt.HeadlessException;
-import java.awt.MouseInfo;
-import java.io.IOException;
+import static java.lang.Thread.yield;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -23,11 +20,12 @@ import java.util.Date;
 public class BCMiner extends BCClient {
 
     private BlockChain chain;
-    private Block working;
+    private Block working = null;
     private ArrayList<Block> pending;
 
     private InetAddress server;
     private ArrayList<InetAddress> peers;
+    private ArrayList<InetAddress> miners;
 
     private String hashID = "";
 
@@ -43,6 +41,7 @@ public class BCMiner extends BCClient {
             System.out.println("Your Miner ID:" + hashID);
 
             peers = new ArrayList();
+            miners = new ArrayList();
             pending = new ArrayList();
 
             socket = new DatagramSocket();
@@ -93,6 +92,10 @@ public class BCMiner extends BCClient {
                     peers.add(receivePacket.getAddress());
                     System.out.println("Peer acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
+                if (new String(receivePacket.getData()).trim().equals(BCTimestampServer.MINERRESPONSE + "")) {
+                    miners.add(receivePacket.getAddress());
+                    System.out.println("Miner acknowledged: " + (receivePacket.getAddress()).getHostAddress());
+                }
 
                 currentTime = new Date().getTime();
                 System.out.println("End Cycle:" + ((currentTime - startTime) / 1000.0));
@@ -101,14 +104,37 @@ public class BCMiner extends BCClient {
         } catch (Exception ex) {
         }
 
+        chain = getBlockchainFromServer();
+
         new Thread(new BCMinerSocket(this)).start();
 
+        while (true) {
+            if (working == null) {
+                if (!pending.isEmpty()) {
+                    System.out.println("New work");
+                    working = pending.get(0);
+                }
+            } else if (proofOfWork() != -1) {
+                System.out.println("POW success");
+                sendBlockValidated();
+                chain.addBlock(working);
+                pending.remove(working);
+                working = null;
+            }
+            yield();
+        }
+
+    }
+
+    private BlockChain getBlockchainFromServer() {
+        //TODO mudar para pegar do server mesmo
+        return new BlockChain();
     }
 
     @Override
     public void addPeer(InetAddress address) {
         System.out.println("Receiving peer");
-        if(peers.contains(address)){
+        if (peers.contains(address)) {
             return;
         }
         peers.add(address);
@@ -116,7 +142,7 @@ public class BCMiner extends BCClient {
         for (InetAddress c : peers) {
             try {
                 System.out.println(c.toString());
-                if (!c.isReachable(1)) {
+                if (!c.isReachable(100)) {
                     toRemove.add(c);
                 }
             } catch (Exception ex) {
@@ -130,12 +156,33 @@ public class BCMiner extends BCClient {
     }
 
     public void receiveBlockValidationRequest(Block b) {
-        System.out.println(b.toString());
-        pending.add(b);
+        if (CheckValid(b)) {
+            pending.add(b);
+        } else {
+            
+        }
+        System.out.println(pending.get(pending.size() - 1));
     }
 
-    public void proofOfWork() {
-        //Take some time
+    public int proofOfWork() {
+        try {
+            int difficulty = 3;
+            String block = working.Hash();
+            String hash = "";
+            int nonce = 0;
+            while (!hash.startsWith("000") && working != null) {
+                hash = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((block + "" + nonce).getBytes()));
+                nonce++;
+                System.out.println(nonce);
+            }
+            if (working != null) {
+                System.out.println(hash.substring(0, 5));
+                return nonce;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     public void receiveBlockValidatedRequest(Block b) {
@@ -144,6 +191,39 @@ public class BCMiner extends BCClient {
             working = null;
         }
         pending.remove(b);
+    }
+
+    private void sendBlockValidated() {
+        try {
+            DatagramPacket packet;
+            byte[] message = (BCTimestampServer.TRANSACTIONCONFIRMEDBROADCAST + ":" + working.Hash()).getBytes();
+
+            for (InetAddress a : peers) {
+                packet = new DatagramPacket(message, message.length, a, BCTimestampServer.WALLETRECEIVEPORT);
+                socket.send(packet);
+            }
+
+            for (InetAddress a : miners) {
+                packet = new DatagramPacket(message, message.length, a, BCTimestampServer.MINERRECEIVEPORT);
+                socket.send(packet);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean CheckValid(Block b) {
+        if(chain.getBlockByHash(b.fundBlock()) == null){
+            return false;
+        }
+        if(chain.getBlockByHash(b.fundBlock()).Value() < b.Value()){
+            return false;
+        }
+        if(!b.previousBlock().equals(chain.getBlockByHash(b.previousBlock()).Hash())){
+            return false;
+        }
+        return true;
     }
 
 }

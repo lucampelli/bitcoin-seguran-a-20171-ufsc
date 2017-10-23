@@ -66,8 +66,8 @@ public class Block {
             this.fundBlock = null;
             this.value = value;
             this.change = 0;
-            this.hash = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((this.blockOwnerID + this.targetID + this.timeStamp.toString() + this.previousHash).getBytes()));
-        } catch (NoSuchAlgorithmException ex) {
+            this.hash = "1";
+        } catch (Exception ex) {
             System.out.println("Block Error: " + ex.getMessage());
         }
     }
@@ -79,7 +79,6 @@ public class Block {
     public Block(String data) {
         try {
             String[] split = data.trim().split(" ");
-            System.out.println(split.length);
             if (split.length != 8) {
                 throw new Exception("New Block Wrong Data Length");
             }
@@ -108,11 +107,19 @@ public class Block {
     public String ID(){
         return this.blockOwnerID;
     }
+    
+    public String fundBlock(){
+        return this.fundBlock;
+    }
+    
+    public String previousBlock(){
+        return this.previousHash;
+    }
 
     @Override
     public String toString() {
         return this.blockOwnerID + " " + this.targetID + " "
-                + this.timeStamp.toString() + " " + this.previousHash + " "
+                + "17/10/01" + " " + this.previousHash + " "
                 + this.fundBlock + " " + this.value + " " + this.change + " " + this.hash;
     }
 

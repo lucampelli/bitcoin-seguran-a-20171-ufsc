@@ -26,7 +26,8 @@ public class BCWallet extends BCClient {
 
     private BlockChain chain;
     private ArrayList<Block> myTransactions;
-
+    private ArrayList<Block> unconfirmedTransactions;
+    
     private InetAddress server;
     private ArrayList<InetAddress> miners;
 
@@ -48,6 +49,7 @@ public class BCWallet extends BCClient {
 
             miners = new ArrayList();
             myTransactions = new ArrayList<>();
+            unconfirmedTransactions = new ArrayList<>();
 
             socket = new DatagramSocket();
             socket.setBroadcast(true);
@@ -96,7 +98,7 @@ public class BCWallet extends BCClient {
                 }
                 if (new String(receivePacket.getData()).trim().equals(BCTimestampServer.MINERRESPONSE + "")) {
                     miners.add(receivePacket.getAddress());
-                    System.out.println("Peer acknowledged: " + (receivePacket.getAddress()).getHostAddress());
+                    System.out.println("Miner acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
 
                 currentTime = new Date().getTime();
@@ -116,7 +118,7 @@ public class BCWallet extends BCClient {
 
     }
     
-    public float getBalance(){
+    private float getBalance(){
         float sum = 0;
         for(Block b : myTransactions){
             sum += b.Value();
@@ -124,24 +126,26 @@ public class BCWallet extends BCClient {
         return sum;
     }
     
-    public Block SearchValidFundBlock(float value){
+   private Block SearchValidFundBlock(float value){
         for(Block b : myTransactions){
             if(b.Value() >= value){
                 return b;
             }
         }
-        return chain.head;
+        return chain.Head();
     }
     
 
-    public void createTransaction(String targetHash, float value) {
+    private void createTransaction(String targetHash, float value) {
         try {
             
             Block b = new Block(this.hashID, targetHash, new Date(), chain.Head().Hash(),
                     SearchValidFundBlock(value),value);
             
+            unconfirmedTransactions.add(b);
+            
             //BroadCast
-            byte[] data = (BCTimestampServer.TRANSACTIONSTARTBROADCAST + "|" + b.toString()).getBytes();
+            byte[] data = (BCTimestampServer.TRANSACTIONSTARTBROADCAST + ":" + b.toString()).getBytes();
             
             DatagramPacket p;
             
@@ -182,6 +186,19 @@ public class BCWallet extends BCClient {
     private BlockChain getBlockchainFromServer() {
         //TODO mudar para pegar do server mesmo
         return new BlockChain();
+    }
+    
+    public void confirmTransaction(String blockHash){
+        Block conf = null;
+        for(Block b : unconfirmedTransactions){
+            if(b.Hash().equals(blockHash)){
+                conf = b;
+                myTransactions.add(b);
+                break;
+            }
+        }
+        unconfirmedTransactions.remove(conf);
+        System.out.println("Transaction Confirmed");
     }
 
 }
