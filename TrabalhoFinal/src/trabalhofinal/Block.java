@@ -116,11 +116,22 @@ public class Block {
         return this.previousHash;
     }
 
+    public String target(){
+        return this.targetID;
+    }
+    
     @Override
     public String toString() {
         return this.blockOwnerID + " " + this.targetID + " "
                 + "17/10/01" + " " + this.previousHash + " "
                 + this.fundBlock + " " + this.value + " " + this.change + " " + this.hash;
+    }
+    
+    //Debug purposes
+    public String toStringLines() {
+        return this.blockOwnerID + System.lineSeparator() + this.targetID + System.lineSeparator()
+                + "17/10/01" + System.lineSeparator() + this.previousHash + System.lineSeparator()
+                + this.fundBlock + System.lineSeparator() + this.value + System.lineSeparator() + this.change + System.lineSeparator() + this.hash + System.lineSeparator();
     }
 
 }

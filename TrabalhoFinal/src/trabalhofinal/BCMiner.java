@@ -120,6 +120,7 @@ public class BCMiner extends BCClient {
                 chain.addBlock(working);
                 pending.remove(working);
                 working = null;
+                System.out.println(chain.toStringLines());
             }
             yield();
         }
@@ -170,7 +171,7 @@ public class BCMiner extends BCClient {
             String block = working.Hash();
             String hash = "";
             int nonce = 0;
-            while (!hash.startsWith("000") && working != null) {
+            while (!hash.startsWith("0000") && working != null) {
                 hash = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((block + "" + nonce).getBytes()));
                 nonce++;
                 System.out.println(nonce);
@@ -217,10 +218,13 @@ public class BCMiner extends BCClient {
         if(chain.getBlockByHash(b.fundBlock()) == null){
             return false;
         }
+        if(!chain.getBlockByHash(b.fundBlock()).target().equals(b.ID())){
+            return false;
+        }
         if(chain.getBlockByHash(b.fundBlock()).Value() < b.Value()){
             return false;
         }
-        if(!b.previousBlock().equals(chain.getBlockByHash(b.previousBlock()).Hash())){
+        if(!b.previousBlock().equals(chain.Head().Hash())){
             return false;
         }
         return true;

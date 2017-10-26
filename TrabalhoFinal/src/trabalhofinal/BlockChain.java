@@ -52,5 +52,16 @@ public class BlockChain {
         return IDchain.get(ID);
     }
     
+    public String toStringLines(){
+        Block b = head;
+        String r = "";
+        for(int i = 0; i < chain.size(); i++){
+            r += b.toStringLines();
+            b = getBlockByHash(b.previousBlock());
+        }
+        return r;
+        
+    }
+    
     
 }

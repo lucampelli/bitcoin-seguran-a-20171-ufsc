@@ -199,6 +199,7 @@ public class BCWallet extends BCClient {
         }
         unconfirmedTransactions.remove(conf);
         System.out.println("Transaction Confirmed");
+        System.out.println(conf.toStringLines());
     }
 
 }
