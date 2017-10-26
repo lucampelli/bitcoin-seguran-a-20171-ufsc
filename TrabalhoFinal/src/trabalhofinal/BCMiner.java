@@ -12,6 +12,7 @@ import java.net.InetAddress;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  *
@@ -21,11 +22,11 @@ public class BCMiner extends BCClient {
 
     private BlockChain chain;
     private Block working = null;
-    private ArrayList<Block> pending;
+    private List<Block> pending;
 
     private InetAddress server;
-    private ArrayList<InetAddress> peers;
-    private ArrayList<InetAddress> miners;
+    private List<InetAddress> peers;
+    private List<InetAddress> miners;
 
     private String hashID = "";
 
@@ -40,9 +41,9 @@ public class BCMiner extends BCClient {
             hashID = "AC84B32E9D61A4422D1F7AABEF96C326CD2BDD61BFDBF46C2E193EC645B1CA40DD72662FD25B194A1403EDF76B80D18042A220C4DC97966DE718E37F64FFCF9A";
             System.out.println("Your Miner ID:" + hashID);
 
-            peers = new ArrayList();
-            miners = new ArrayList();
-            pending = new ArrayList();
+            peers = new ArrayList<>();
+            miners = new ArrayList<>();
+            pending = new ArrayList<>();
 
             socket = new DatagramSocket();
             socket.setBroadcast(true);
@@ -139,7 +140,7 @@ public class BCMiner extends BCClient {
             return;
         }
         peers.add(address);
-        ArrayList<InetAddress> toRemove = new ArrayList();
+        ArrayList<InetAddress> toRemove = new ArrayList<>();
         for (InetAddress c : peers) {
             try {
                 System.out.println(c.toString());
@@ -150,9 +151,7 @@ public class BCMiner extends BCClient {
                 ex.printStackTrace();
             }
         }
-        for (InetAddress c : toRemove) {
-            peers.remove(c);
-        }
+        peers.removeAll(toRemove);
         toRemove.clear();
     }
 
@@ -160,7 +159,7 @@ public class BCMiner extends BCClient {
         if (CheckValid(b)) {
             pending.add(b);
         } else {
-            
+
         }
         System.out.println(pending.get(pending.size() - 1));
     }

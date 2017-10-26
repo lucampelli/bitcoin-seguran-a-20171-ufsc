@@ -47,7 +47,7 @@ public class BCWallet extends BCClient {
             
             System.out.println("Your Wallet ID:" + hashID);
 
-            miners = new ArrayList();
+            miners = new ArrayList<>();
             myTransactions = new ArrayList<>();
             unconfirmedTransactions = new ArrayList<>();
 
