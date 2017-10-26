@@ -5,6 +5,10 @@
  */
 package trabalhofinal;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import static java.lang.Thread.yield;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -48,7 +52,7 @@ public class BCMiner extends BCClient {
             socket = new DatagramSocket();
             socket.setBroadcast(true);
 
-            byte[] data = (BCTimestampServer.DISCOVERY + "").getBytes();
+            byte[] data = (BCTimestampServer.DISCOVERY + " " + hashID).getBytes();
             DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.SERVERRECEIVEPORT); // broadcast for peers and server
 
             DatagramPacket packet1 = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.MINERRECEIVEPORT);// para conseguir testar em um computador só
@@ -129,7 +133,20 @@ public class BCMiner extends BCClient {
     }
 
     private BlockChain getBlockchainFromServer() {
-        //TODO mudar para pegar do server mesmo
+        
+        byte[] recvBuf = new byte[50 * 1024];
+        try {
+            DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
+            socket.receive(packet);
+
+            ByteArrayInputStream byteStream = new ByteArrayInputStream(packet.getData());
+            ObjectInputStream objectIStream = new ObjectInputStream(new BufferedInputStream(byteStream));
+            Object o = objectIStream.readObject();
+            objectIStream.close();
+        } catch (Exception e) {
+        }
+        
+        
         return new BlockChain();
     }
 

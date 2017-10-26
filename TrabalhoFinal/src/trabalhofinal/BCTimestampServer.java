@@ -37,9 +37,13 @@ public class BCTimestampServer implements Runnable {
     public final static short CHAINRESPONSE = 20;
     public final static short PEERRESPONSE = 30;
     public final static short MINERRESPONSE = 40;
+    
+    public static int matrixCount = 0;
 
     public static BCTimestampServer INSTANCE;
 
+    public BlockChain chain;
+    
     private DatagramSocket socketRec;
     private DatagramSocket socketSend;
 
@@ -50,11 +54,12 @@ public class BCTimestampServer implements Runnable {
         return INSTANCE;
     }
 
-    BCTimestampServer() {
+    private BCTimestampServer() {
         try {
             socketRec = new DatagramSocket(SERVERRECEIVEPORT, InetAddress.getByName("0.0.0.0"));
             socketRec.setBroadcast(true);
             socketSend = new DatagramSocket(SERVERSENDPORT, InetAddress.getByName("0.0.0.0"));
+            chain = new BlockChain();
 
         } catch (SocketException | UnknownHostException e) {
             e.printStackTrace();
@@ -76,10 +81,11 @@ public class BCTimestampServer implements Runnable {
                 System.out.println("Received Packet from: " + packet.getAddress().getHostAddress() + ":" + packet.getPort());
                 System.out.println("Saying:" + new String(packet.getData()));
 
-                Thread response = new Thread(new BCServerHandler(packet, socketSend));
+                Thread response = new Thread(new BCServerHandler(packet, socketSend, chain));
                 response.start();
 
                 System.out.println("Sent");
+                System.out.println(chain.toStringLines());
 
             } catch (IOException ex) {
                 ex.printStackTrace();

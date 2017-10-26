@@ -57,16 +57,16 @@ public class Block {
      * @param time
      * @param value 
      */
-    public Block(String owner, String target, Date time, float value){
+    public Block(String target, int order, float value){
         try {
-            this.blockOwnerID = owner;
+            this.blockOwnerID = "";
             this.targetID = target;
-            this.timeStamp = time;
+            this.timeStamp = new Date();
             this.previousHash = "";
-            this.fundBlock = null;
+            this.fundBlock = "";
             this.value = value;
             this.change = 0;
-            this.hash = "1";
+            this.hash = "" + order;
         } catch (Exception ex) {
             System.out.println("Block Error: " + ex.getMessage());
         }
