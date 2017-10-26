@@ -23,6 +23,7 @@ public class BCTimestampServer implements Runnable {
     private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
     
     public final static short SERVERRECEIVEPORT = 8888;
+    public final static short SERVERSENDPORT = 8889;
     public final static short MINERRECEIVEPORT = 8890;
     public final static short WALLETRECEIVEPORT = 8891;
 
@@ -51,9 +52,9 @@ public class BCTimestampServer implements Runnable {
 
     BCTimestampServer() {
         try {
-            socketRec = new DatagramSocket(8888, InetAddress.getByName("0.0.0.0"));
+            socketRec = new DatagramSocket(SERVERRECEIVEPORT, InetAddress.getByName("0.0.0.0"));
             socketRec.setBroadcast(true);
-            socketSend = new DatagramSocket(8889, InetAddress.getByName("0.0.0.0"));
+            socketSend = new DatagramSocket(SERVERSENDPORT, InetAddress.getByName("0.0.0.0"));
 
         } catch (SocketException | UnknownHostException e) {
             e.printStackTrace();
@@ -62,7 +63,7 @@ public class BCTimestampServer implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("Server address:" + socketRec.getLocalAddress().getHostAddress());
+        System.out.println("Server address:" + socketRec.getLocalAddress().getHostAddress() + ":" + socketRec.getLocalPort());
         while (true) {
             try {
                 System.out.println(getClass().getName() + " is ready to receive requests");
@@ -72,7 +73,7 @@ public class BCTimestampServer implements Runnable {
                 socketRec.receive(packet);
 
                 //packet received
-                System.out.println("Received Packet from:" + packet.getAddress().getHostAddress());
+                System.out.println("Received Packet from: " + packet.getAddress().getHostAddress() + ":" + packet.getPort());
                 System.out.println("Saying:" + new String(packet.getData()));
 
                 Thread response = new Thread(new BCServerHandler(packet, socketSend));
