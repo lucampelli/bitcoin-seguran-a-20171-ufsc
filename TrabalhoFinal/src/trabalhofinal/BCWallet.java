@@ -5,18 +5,13 @@
  */
 package trabalhofinal;
 
-import java.awt.HeadlessException;
-import java.awt.MouseInfo;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.HashMap;
 
 /**
  *
@@ -29,7 +24,7 @@ public class BCWallet extends BCClient {
     private ArrayList<Block> unconfirmedTransactions;
     
     private InetAddress server;
-    private ArrayList<InetAddress> miners;
+    private HashMap<String,InetAddress> miners;
 
     private String hashID = "";
 
@@ -47,14 +42,14 @@ public class BCWallet extends BCClient {
             
             System.out.println("Your Wallet ID:" + hashID);
 
-            miners = new ArrayList<>();
+            miners = new HashMap();
             myTransactions = new ArrayList<>();
             unconfirmedTransactions = new ArrayList<>();
 
             socket = new DatagramSocket();
             socket.setBroadcast(true);
 
-            byte[] data = (BCTimestampServer.DISCOVERY + "").getBytes();
+            byte[] data = (BCTimestampServer.DISCOVERY + ":" + hashID).getBytes();
             DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.SERVERRECEIVEPORT); // broadcast for peers and server
 
             DatagramPacket packet1 = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.MINERRECEIVEPORT);
@@ -97,7 +92,7 @@ public class BCWallet extends BCClient {
                     System.out.println("Server acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
                 if (new String(receivePacket.getData()).trim().equals(BCTimestampServer.MINERRESPONSE + "")) {
-                    miners.add(receivePacket.getAddress());
+                    miners.put("",receivePacket.getAddress());  //TODO get correct Hash ID
                     System.out.println("Miner acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
 
@@ -149,7 +144,7 @@ public class BCWallet extends BCClient {
             
             DatagramPacket p;
             
-            for (InetAddress a : miners) {
+            for (InetAddress a : miners.values()) {
                 p = new DatagramPacket(data, data.length, a, BCTimestampServer.MINERRECEIVEPORT);
                 System.out.println("New Block");
                 socket.send(p);
@@ -160,27 +155,12 @@ public class BCWallet extends BCClient {
     }
 
     @Override
-    public void addPeer(InetAddress address) {
+    public void addPeer(String HashID, InetAddress address) {
         System.out.println("Receiving peer");
-        if(miners.contains(address)){
+        if(miners.containsKey(HashID)){
             return;
         }
-        miners.add(address);
-        ArrayList<InetAddress> toRemove = new ArrayList();
-        for (InetAddress c : miners) {
-            try {
-                System.out.println(c.toString());
-                if (!c.isReachable(1)) {
-                    toRemove.add(c);
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-        for (InetAddress c : toRemove) {
-            miners.remove(c);
-        }
-        toRemove.clear();
+        miners.put(HashID,address);
     }
 
     private BlockChain getBlockchainFromServer() {

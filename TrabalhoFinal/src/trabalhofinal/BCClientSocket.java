@@ -45,18 +45,18 @@ public class BCClientSocket implements Runnable {
                     continue;
                 }
 
-                String data = new String(p.getData()).trim();
+                String data[] = new String(p.getData()).trim().split(":");
 
-                if (data.equals(BCTimestampServer.DISCOVERY + "")) {
+                if (data[0].equals(BCTimestampServer.DISCOVERY + "")) {
                     System.out.println("Client Received Discovery");
-                    client.addPeer(p.getAddress());
+                    client.addPeer(data[1], p.getAddress());
                     r = (BCTimestampServer.PEERRESPONSE + "").getBytes();
                     DatagramPacket response = new DatagramPacket(r, r.length, p.getAddress(), p.getPort());
                     socket.send(response);
                 }
 
-                if (data.split(":")[0].equals(BCTimestampServer.TRANSACTIONCONFIRMEDBROADCAST + "")) {
-                    client.confirmTransaction(data.split(":")[1]);
+                if (data[0].equals(BCTimestampServer.TRANSACTIONCONFIRMEDBROADCAST + "")) {
+                    client.confirmTransaction(data[1]);
                 }
                 
                 yield();

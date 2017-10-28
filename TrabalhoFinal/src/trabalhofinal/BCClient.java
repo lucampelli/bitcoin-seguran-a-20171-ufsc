@@ -13,5 +13,5 @@ import java.net.InetAddress;
  */
 public abstract class BCClient {
     
-    public abstract void addPeer(InetAddress address);
+    public abstract void addPeer(String HashID, InetAddress address);
 }

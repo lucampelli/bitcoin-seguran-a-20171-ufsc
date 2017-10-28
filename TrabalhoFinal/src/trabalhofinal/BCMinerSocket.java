@@ -47,7 +47,7 @@ public class BCMinerSocket implements Runnable {
 
                 if (data[0].equals(BCTimestampServer.DISCOVERY + "")) {
                     System.out.println("Client Received Discovery");
-                    client.addPeer(p.getAddress());
+                    client.addPeer(data[1], p.getAddress());
                     r = (BCTimestampServer.MINERRESPONSE + "").getBytes();
                     DatagramPacket response = new DatagramPacket(r, r.length, p.getAddress(), p.getPort());
                     socket.send(response);
