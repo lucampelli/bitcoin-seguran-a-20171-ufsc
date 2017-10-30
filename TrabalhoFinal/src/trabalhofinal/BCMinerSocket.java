@@ -56,6 +56,10 @@ public class BCMinerSocket implements Runnable {
                     System.out.println("Miner Received New Transaction ");
                     client.receiveBlockValidationRequest(new Block(data[1]));
                 }
+                if(data[0].equals(BCTimestampServer.TRANSACTIONCONFIRMEDBROADCAST + "")){
+                    System.out.println("Miner Received Transaction Confirmation");
+                    client.receiveBlockValidatedRequest(new Block(data[1]));
+                }
 
                 yield();
             }

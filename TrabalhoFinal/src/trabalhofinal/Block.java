@@ -5,6 +5,7 @@
  */
 package trabalhofinal;
 
+import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
@@ -15,7 +16,7 @@ import java.util.logging.Logger;
  *
  * @author luca Um bloco da blockChain
  */
-public class Block {
+public class Block implements Serializable{
 
     private String blockOwnerID;
     private String targetID;
@@ -62,7 +63,7 @@ public class Block {
             this.blockOwnerID = "";
             this.targetID = target;
             this.timeStamp = new Date();
-            this.previousHash = "";
+            this.previousHash = order -1 +"";
             this.fundBlock = "";
             this.value = value;
             this.change = 0;

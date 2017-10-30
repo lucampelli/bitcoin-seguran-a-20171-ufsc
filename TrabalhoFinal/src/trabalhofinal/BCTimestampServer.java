@@ -84,7 +84,7 @@ public class BCTimestampServer implements Runnable {
                 Thread response = new Thread(new BCServerHandler(packet, socketSend, chain));
                 response.start();
 
-                System.out.println("Sent");
+                System.out.println("current chain");
                 System.out.println(chain.toStringLines());
 
             } catch (IOException ex) {

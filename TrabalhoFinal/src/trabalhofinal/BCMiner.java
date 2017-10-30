@@ -52,7 +52,7 @@ public class BCMiner extends BCClient {
             socket = new DatagramSocket();
             socket.setBroadcast(true);
 
-            byte[] data = (BCTimestampServer.DISCOVERY + " " + hashID).getBytes();
+            byte[] data = (BCTimestampServer.DISCOVERY + ":" + hashID).getBytes();
             DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.SERVERRECEIVEPORT); // broadcast for peers and server
             DatagramPacket packet1 = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.MINERRECEIVEPORT);// para conseguir testar em um computador só
             DatagramPacket packet2 = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.WALLETRECEIVEPORT);
@@ -88,16 +88,18 @@ public class BCMiner extends BCClient {
                 //We have a response
                 System.out.println("Broadcast response: " + new String(receivePacket.getData()).trim() + " " + receivePacket.getAddress().getHostAddress());
 
-                if (new String(receivePacket.getData()).trim().equals(BCTimestampServer.SERVERDISCOVERYRESPONSE + "")) {
+                String recData = new String(receivePacket.getData()).trim();
+                
+                if (recData.split(":")[0].equals(BCTimestampServer.SERVERDISCOVERYRESPONSE + "")) {
                     server = receivePacket.getAddress();
                     System.out.println("Server acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
-                if (new String(receivePacket.getData()).trim().equals(BCTimestampServer.PEERRESPONSE + "")) {
-                    peers.put("",receivePacket.getAddress());//TODO get correct Hash ID
+                if (recData.split(":")[0].equals(BCTimestampServer.PEERRESPONSE + "")) {
+                    peers.put(recData.split(":")[1],receivePacket.getAddress());
                     System.out.println("Peer acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
-                if (new String(receivePacket.getData()).trim().equals(BCTimestampServer.MINERRESPONSE + "")) {
-                    miners.put("",receivePacket.getAddress());//TODO get correct Hash ID
+                if (recData.split(":")[0].equals(BCTimestampServer.MINERRESPONSE + "")) {
+                    miners.put(recData.split(":")[1],receivePacket.getAddress());
                     System.out.println("Miner acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
 
@@ -109,6 +111,7 @@ public class BCMiner extends BCClient {
         }
 
         chain = getBlockchainFromServer();
+        System.out.println(chain.toStringLines());
 
         new Thread(new BCMinerSocket(this)).start();
 
@@ -132,16 +135,22 @@ public class BCMiner extends BCClient {
     }
 
     private BlockChain getBlockchainFromServer() {
-        
+        byte[] data = (BCTimestampServer.ASKFORCHAIN + "").getBytes();
+        if(server == null){
+            return new BlockChain();
+        }
         byte[] recvBuf = new byte[50 * 1024];
         try {
+            socket.setSoTimeout(5);
+            socket.send(new DatagramPacket(data, data.length,server,BCTimestampServer.SERVERRECEIVEPORT));
             DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
             socket.receive(packet);
-
+            
             ByteArrayInputStream byteStream = new ByteArrayInputStream(packet.getData());
             ObjectInputStream objectIStream = new ObjectInputStream(new BufferedInputStream(byteStream));
             Object o = objectIStream.readObject();
             objectIStream.close();
+            return (BlockChain) o;
         } catch (Exception e) {
         }
         
@@ -170,11 +179,11 @@ public class BCMiner extends BCClient {
 
     public int proofOfWork() {
         try {
-            int difficulty = 3;
+            int difficulty = 4;
             String block = working.Hash();
             String hash = "";
             int nonce = 0;
-            while (!hash.startsWith("0000") && working != null) {
+            while (!hash.startsWith(POWdiff(difficulty)) && working != null) {
                 hash = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((block + "" + nonce).getBytes()));
                 nonce++;
                 System.out.println(nonce);
@@ -233,4 +242,11 @@ public class BCMiner extends BCClient {
         return true;
     }
 
+    public String POWdiff(int diff){
+        String ans = "";
+        for (int i = 0; i < diff; i++){
+            ans += "0";
+        }
+        return ans.trim();
+    }
 }

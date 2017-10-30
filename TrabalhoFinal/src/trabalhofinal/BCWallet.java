@@ -5,7 +5,10 @@
  */
 package trabalhofinal;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -22,9 +25,9 @@ public class BCWallet extends BCClient {
     private BlockChain chain;
     private ArrayList<Block> myTransactions;
     private ArrayList<Block> unconfirmedTransactions;
-    
+
     private InetAddress server;
-    private HashMap<String,InetAddress> miners;
+    private HashMap<String, InetAddress> miners;
 
     private String hashID = "";
 
@@ -39,7 +42,7 @@ public class BCWallet extends BCClient {
             balance = 0;
             //hashID = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((new Date().getTime() + "" + MouseInfo.getPointerInfo().getLocation().x + "" + MouseInfo.getPointerInfo().getLocation().y).getBytes()));
             hashID = "AC84B32E9D61A4422D1F7AABEF96C326CD2BDD61BFDBF46C2E193EC645B1CA40DD72662FD25B194A1403EDF76B80D18042A220C4DC97966DE718E37F64FFCF9B";
-            
+
             System.out.println("Your Wallet ID:" + hashID);
 
             miners = new HashMap();
@@ -87,12 +90,14 @@ public class BCWallet extends BCClient {
                 //Recebemos resposta
                 System.out.println("Broadcast response: " + new String(receivePacket.getData()).trim() + " " + receivePacket.getAddress().getHostAddress());
 
-                if (new String(receivePacket.getData()).trim().equals(BCTimestampServer.SERVERDISCOVERYRESPONSE + "")) {
+                String recData = new String(receivePacket.getData()).trim();
+
+                if (recData.split(":")[0].equals(BCTimestampServer.SERVERDISCOVERYRESPONSE + "")) {
                     server = receivePacket.getAddress();
                     System.out.println("Server acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
-                if (new String(receivePacket.getData()).trim().equals(BCTimestampServer.MINERRESPONSE + "")) {
-                    miners.put("",receivePacket.getAddress());  //TODO get correct Hash ID
+                if (recData.split(":")[0].equals(BCTimestampServer.MINERRESPONSE + "")) {
+                    miners.put(recData.split(":")[1], receivePacket.getAddress());
                     System.out.println("Miner acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
 
@@ -104,46 +109,45 @@ public class BCWallet extends BCClient {
         }
 
         new Thread(new BCClientSocket(this)).start();
-        
+
         String target = "AC84B32E9D61A4422D1F7AABEF96C326CD2BDD61BFDBF46C2E193EC645B1CA40DD72662FD25B194A1403EDF76B80D18042A220C4DC97966DE718E37F64FFCF9A";
-        
+
         chain = getBlockchainFromServer();
-        
+
         createTransaction(target, 1.0f);
 
     }
-    
-    private float getBalance(){
+
+    private float getBalance() {
         float sum = 0;
-        for(Block b : myTransactions){
+        for (Block b : chain.getAllBlocksToUser(hashID)) {
             sum += b.Value();
         }
         return sum;
     }
-    
-   private Block SearchValidFundBlock(float value){
-        for(Block b : myTransactions){
-            if(b.Value() >= value){
+
+    private Block SearchValidFundBlock(float value) {
+        for (Block b : myTransactions) {
+            if (b.Value() >= value) {
                 return b;
             }
         }
         return chain.Head();
     }
-    
 
     private void createTransaction(String targetHash, float value) {
         try {
-            
+
             Block b = new Block(this.hashID, targetHash, new Date(), chain.Head().Hash(),
-                    SearchValidFundBlock(value),value);
-            
+                    SearchValidFundBlock(value), value);
+
             unconfirmedTransactions.add(b);
-            
+
             //BroadCast
             byte[] data = (BCTimestampServer.TRANSACTIONSTARTBROADCAST + ":" + b.toString()).getBytes();
-            
+
             DatagramPacket p;
-            
+
             for (InetAddress a : miners.values()) {
                 p = new DatagramPacket(data, data.length, a, BCTimestampServer.MINERRECEIVEPORT);
                 System.out.println("New Block");
@@ -157,29 +161,47 @@ public class BCWallet extends BCClient {
     @Override
     public void addPeer(String HashID, InetAddress address) {
         System.out.println("Receiving peer");
-        if(miners.containsKey(HashID)){
+        if (miners.containsKey(HashID)) {
             return;
         }
-        miners.put(HashID,address);
+        miners.put(HashID, address);
     }
 
     private BlockChain getBlockchainFromServer() {
-        //TODO mudar para pegar do server mesmo
+        byte[] data = (BCTimestampServer.ASKFORCHAIN + "").getBytes();
+        
+        byte[] recvBuf = new byte[50 * 1024];
+        try {
+            socket.send(new DatagramPacket(data, data.length,server,BCTimestampServer.SERVERRECEIVEPORT));
+            DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
+            socket.receive(packet);
+
+            ByteArrayInputStream byteStream = new ByteArrayInputStream(packet.getData());
+            ObjectInputStream objectIStream = new ObjectInputStream(new BufferedInputStream(byteStream));
+            Object o = objectIStream.readObject();
+            objectIStream.close();
+            return (BlockChain) o;
+        } catch (Exception e) {
+        }
+        
+        
         return new BlockChain();
     }
-    
-    public void confirmTransaction(String blockHash){
+
+    public void confirmTransaction(String blockHash) {
         Block conf = null;
-        for(Block b : unconfirmedTransactions){
-            if(b.Hash().equals(blockHash)){
+        for (Block b : unconfirmedTransactions) {
+            if (b.Hash().equals(blockHash)) {
                 conf = b;
                 myTransactions.add(b);
                 break;
             }
         }
-        unconfirmedTransactions.remove(conf);
-        System.out.println("Transaction Confirmed");
-        System.out.println(conf.toStringLines());
+        if (conf != null) {
+            unconfirmedTransactions.remove(conf);
+            System.out.println("Transaction Confirmed");
+            System.out.println(conf.toStringLines());
+        }
     }
 
 }
