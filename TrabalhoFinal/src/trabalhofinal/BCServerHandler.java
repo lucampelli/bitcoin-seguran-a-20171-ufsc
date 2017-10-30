@@ -43,16 +43,20 @@ public class BCServerHandler implements Runnable {
     @Override
     public void run() {
         command = new String(commPacket.getData()).trim().split(":")[0];
+        System.out.println(command);
         int com = Integer.parseInt(command);
         switch (com) {
             case BCTimestampServer.DISCOVERY:
-                for(Block b : chain.getAllBlocksToUser(new String(commPacket.getData()).trim().split(":")[1])){
-                    if(b.ID() == ""){
-                        break;
+                boolean t = false;
+                for (Block b : chain.getAllBlocksToUser(new String(commPacket.getData()).trim().split(":")[1])) {
+                    if (b.ID() == "") {
+                        t = true;
                     }
                 }
-                chain.addBlock(new Block(new String(commPacket.getData()).trim().split(":")[1], BCTimestampServer.matrixCount, 1));
-                BCTimestampServer.matrixCount++;
+                if (!t) {
+                    chain.addBlock(new Block(new String(commPacket.getData()).trim().split(":")[1], BCTimestampServer.matrixCount, 1));
+                    BCTimestampServer.matrixCount++;
+                }
                 response = BCTimestampServer.SERVERDISCOVERYRESPONSE + "";
                 System.out.println("Server sent response " + response);
                 break;
@@ -60,6 +64,11 @@ public class BCServerHandler implements Runnable {
                 sendTo(chain, commPacket.getAddress(), commPacket.getPort());
                 System.out.println("Server sent chain");
                 response = "";
+                break;
+            case BCTimestampServer.TRANSACTIONCONFIRMEDBROADCAST:
+                Block b = new Block(new String(commPacket.getData()).trim().split(":")[1]);
+                System.out.println("Server Received a transaction completed");
+                chain.addBlock(b);
                 break;
             default:
                 break;

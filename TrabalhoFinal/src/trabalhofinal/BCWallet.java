@@ -108,11 +108,14 @@ public class BCWallet extends BCClient {
         } catch (Exception ex) {
         }
 
+        chain = getBlockchainFromServer();
+        chain.toStringLines();
+        
         new Thread(new BCClientSocket(this)).start();
 
         String target = "AC84B32E9D61A4422D1F7AABEF96C326CD2BDD61BFDBF46C2E193EC645B1CA40DD72662FD25B194A1403EDF76B80D18042A220C4DC97966DE718E37F64FFCF9A";
 
-        chain = getBlockchainFromServer();
+        System.out.println("Your Balance: " + getBalance());
 
         createTransaction(target, 1.0f);
 
@@ -127,7 +130,7 @@ public class BCWallet extends BCClient {
     }
 
     private Block SearchValidFundBlock(float value) {
-        for (Block b : myTransactions) {
+        for (Block b : chain.getAllBlocksToUser(hashID)) {
             if (b.Value() >= value) {
                 return b;
             }
@@ -201,6 +204,7 @@ public class BCWallet extends BCClient {
             unconfirmedTransactions.remove(conf);
             System.out.println("Transaction Confirmed");
             System.out.println(conf.toStringLines());
+            System.out.println("Your Balance: " + getBalance());
         }
     }
 

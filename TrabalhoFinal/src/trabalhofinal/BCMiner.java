@@ -172,7 +172,7 @@ public class BCMiner extends BCClient {
             pending.add(b);
             System.out.println(pending.get(pending.size() - 1));
         } else {
-            System.out.println("Bloco não valido");
+            System.out.println("Invalid Block");
         }
         
     }
@@ -221,6 +221,8 @@ public class BCMiner extends BCClient {
                 socket.send(packet);
             }
 
+            packet = new DatagramPacket(message, message.length, server, BCTimestampServer.SERVERRECEIVEPORT);
+            socket.send(packet);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -228,25 +230,33 @@ public class BCMiner extends BCClient {
 
     private boolean CheckValid(Block b) {
         if(chain.getBlockByHash(b.fundBlock()) == null){
+            System.out.println("Inexistant fund block");
             return false;
         }
         if(!chain.getBlockByHash(b.fundBlock()).target().equals(b.ID())){
+            System.out.println("Invalid fund block target");
             return false;
         }
         if(chain.getBlockByHash(b.fundBlock()).Value() < b.Value()){
+            System.out.println("Invalid fund block value");
             return false;
         }
         if(!b.previousBlock().equals(chain.Head().Hash())){
+            System.out.println("Invalid previous block");
             return false;
         }
         return true;
     }
 
-    public String POWdiff(int diff){
+    private String POWdiff(int diff){
         String ans = "";
         for (int i = 0; i < diff; i++){
             ans += "0";
         }
         return ans.trim();
+    }
+    
+    public String ID(){
+        return this.hashID;
     }
 }
