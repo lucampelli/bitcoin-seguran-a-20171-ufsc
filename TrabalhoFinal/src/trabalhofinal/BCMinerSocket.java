@@ -20,6 +20,10 @@ public class BCMinerSocket implements Runnable {
     DatagramSocket socket;
     BCMiner client;
 
+    /**
+     * Este Socket se mantém ativo para o minerador receber as mensagens independente do que estiver fazendo
+     * @param c O minerador atrelado a este socket
+     */
     public BCMinerSocket(BCMiner c) {
         this.client = c;
     }

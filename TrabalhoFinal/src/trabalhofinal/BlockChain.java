@@ -16,41 +16,61 @@ import java.util.HashMap;
 public class BlockChain implements Serializable {
 
     private HashMap<String, Block> chain = new HashMap<>();
-    private HashMap<String, ArrayList<Block>> IDchain = new HashMap<>();
     private Block head;
 
+    /**
+     * Blockchain
+     */
     public BlockChain() {
-        //Block matrixBlock = new Block("AC84B32E9D61A4422D1F7AABEF96C326CD2BDD61BFDBF46C2E193EC645B1CA40DD72662FD25B194A1403EDF76B80D18042A220C4DC97966DE718E37F64FFCF9B",
-        //        1, 50);
-
-        //addBlock(matrixBlock);
     }
 
+    /**
+     * Adiciona um novo bloco à blockchain
+     * @param block Bloco adicionado
+     */
     public void addBlock(Block block) {
         head = block;
         chain.put(block.Hash(), block);
-        if (IDchain.containsKey(block.ID())) {
-            ArrayList<Block> temp = IDchain.get(block.ID());
-            temp.add(block);
-        } else {
-            ArrayList<Block> temp = new ArrayList();
-            temp.add(block);
-            IDchain.put(block.ID(), temp);
-        }
     }
 
+    /**
+     * Retorna o primeiro elemento da blockchain
+     * @return o bloco mais recente
+     */
     public Block Head() {
         return head;
     }
 
+    /**
+     * Retorna um bloco pela sua hash
+     * @param hash a Hash do bloco
+     * @return o bloco
+     */
     public Block getBlockByHash(String hash) {
         return chain.get(hash);
     }
 
-    public ArrayList<Block> getBlocksByID(String ID) {
-        return IDchain.get(ID);
+    /**
+     * Retorna todos os blocos de um usuário
+     * @param ID
+     * @return 
+     */
+    public ArrayList<Block> getAllBlocksFromUser(String ID) {
+        ArrayList<Block> ans = new ArrayList();
+
+        for (Block b : chain.values()) {
+            if (b.ID().equals(ID)) {
+                ans.add(b);
+            }
+        }
+
+        return ans;
     }
 
+    /**
+     * retorna a blockchain em formato de string com newlines
+     * @return descricao
+     */
     public String toStringLines() {
         Block b = head;
         String r = "";
@@ -64,25 +84,17 @@ public class BlockChain implements Serializable {
 
     }
 
+    /**
+     * Retorna todos os blocos direcionados ao usuário
+     * @param HashID    o alvo
+     * @return todos os blocos direcionados ao usuário
+     */
     public ArrayList<Block> getAllBlocksToUser(String HashID) {
 
         ArrayList<Block> ans = new ArrayList();
 
         for (Block b : chain.values()) {
             if (b.target().equals(HashID)) {
-                ans.add(b);
-            }
-        }
-
-        return ans;
-    }
-
-    public ArrayList<Block> getAllBlocksFromUser(String HashID) {
-
-        ArrayList<Block> ans = new ArrayList();
-
-        for (Block b : chain.values()) {
-            if (b.ID().equals(HashID)) {
                 ans.add(b);
             }
         }

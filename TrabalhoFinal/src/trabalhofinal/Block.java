@@ -26,15 +26,16 @@ public class Block implements Serializable{
     private String fundBlock;
     private float value;
     private float change;
-
+    private boolean stamped = false;
+    
     /**
      * Normal Block
-     * @param owner
-     * @param target
-     * @param time
-     * @param previous
-     * @param fundBlock
-     * @param value 
+     * @param owner Dono do bloco
+     * @param target    Alvo da transação
+     * @param time  TimeStamp
+     * @param previous  bloco anterior
+     * @param fundBlock Bloco de fundos para esta transação
+     * @param value Valor da transação
      */
     public Block(String owner, String target, Date time, String previous, Block fundBlock, float value) {
         try {
@@ -119,6 +120,19 @@ public class Block implements Serializable{
 
     public String target(){
         return this.targetID;
+    }
+    
+    public float change(){
+        return change;
+    }
+    
+    public void timeStamp(Date time, String previousHash){
+        if(stamped){
+            return;
+        }
+        stamped = true;
+        this.timeStamp = time;
+        this.previousHash = previousHash;
     }
     
     @Override

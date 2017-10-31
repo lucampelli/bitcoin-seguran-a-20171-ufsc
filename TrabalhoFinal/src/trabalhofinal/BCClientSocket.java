@@ -19,6 +19,10 @@ public class BCClientSocket implements Runnable {
     DatagramSocket socket;
     BCWallet client;
 
+    /**
+     * Este socket se mantém ativo para que uma carteira possa receber mensagens independentemente do que estiver fazendo.
+     * @param c A carteira a qual este socket esta atrelado
+     */
     public BCClientSocket(BCWallet c) {
         this.client = c;
     }
@@ -50,7 +54,7 @@ public class BCClientSocket implements Runnable {
                 if (data[0].equals(BCTimestampServer.DISCOVERY + "")) {
                     System.out.println("Client Received Discovery");
                     client.addPeer(data[1], p.getAddress());
-                    r = (BCTimestampServer.PEERRESPONSE + "").getBytes();
+                    r = (BCTimestampServer.PEERRESPONSE + ":" + client.ID()).getBytes();
                     DatagramPacket response = new DatagramPacket(r, r.length, p.getAddress(), p.getPort());
                     socket.send(response);
                 }

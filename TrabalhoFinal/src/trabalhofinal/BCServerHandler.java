@@ -28,12 +28,27 @@ public class BCServerHandler implements Runnable {
     BlockChain chain;
     String response = "";
     String command = "";
-
+    
+    /**
+     * Handler para que o servidor nao pare
+     * @param comPacket
+     * @param socket
+     * @throws SocketException
+     * @throws UnknownHostException 
+     */
     public BCServerHandler(DatagramPacket comPacket, DatagramSocket socket) throws SocketException, UnknownHostException {
         this.socket = socket;
         this.commPacket = comPacket;
+        chain = null;
     }
 
+    /**
+     * Handler para que o servidor nao pare, já com uma chain criada
+     * @param comPacket
+     * @param socket
+     * @throws SocketException
+     * @throws UnknownHostException 
+     */
     public BCServerHandler(DatagramPacket comPacket, DatagramSocket socket, BlockChain chain) throws SocketException, UnknownHostException {
         this.socket = socket;
         this.commPacket = comPacket;
@@ -86,10 +101,23 @@ public class BCServerHandler implements Runnable {
 
     }
 
+    /**
+     * Função que envia um objeto à um par
+     * @param o
+     * @param hostname
+     * @param port
+     * @throws IOException 
+     */
     public void sendTo(Object o, String hostname, int port) throws IOException {
         sendTo(o, InetAddress.getByName(hostname), port);
     }
 
+    /**
+     * Função que envia um objeto à um par
+     * @param o
+     * @param address
+     * @param port 
+     */
     public void sendTo(Object o, InetAddress address, int port) {
         try (
                 ByteArrayOutputStream byteStream = new ByteArrayOutputStream(50 * 1024);

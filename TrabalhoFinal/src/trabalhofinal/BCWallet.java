@@ -37,6 +37,9 @@ public class BCWallet extends BCClient {
 
     private float timeup = 5;
 
+    /**
+     * Carteira que mostra o balanco e cria novas transações
+     */
     public BCWallet() {
         try {
             balance = 0;
@@ -109,8 +112,8 @@ public class BCWallet extends BCClient {
         }
 
         chain = getBlockchainFromServer();
-        chain.toStringLines();
-        
+        System.out.println(chain.toStringLines());
+
         new Thread(new BCClientSocket(this)).start();
 
         String target = "AC84B32E9D61A4422D1F7AABEF96C326CD2BDD61BFDBF46C2E193EC645B1CA40DD72662FD25B194A1403EDF76B80D18042A220C4DC97966DE718E37F64FFCF9A";
@@ -121,32 +124,60 @@ public class BCWallet extends BCClient {
 
     }
 
+    /**
+     * recupera o balanço desta carteira analisando a blockchain
+     *
+     * @return o valor do balanco
+     */
     private float getBalance() {
         float sum = 0;
         for (Block b : chain.getAllBlocksToUser(hashID)) {
             sum += b.Value();
         }
+        for (Block b : chain.getAllBlocksFromUser(hashID)) {
+            sum += b.change() - b.Value();
+        }
         return sum;
     }
 
+    /**
+     * Procura na corrente um bloco de fundos válido para que se utilize na
+     * transação TODO: Encontrar todos os blocos de fundos que satisfaçam o
+     * valor
+     *
+     * @param value Valor necessário à transação
+     * @return Bloco encontrado ou null se não houver;
+     */
     private Block SearchValidFundBlock(float value) {
         for (Block b : chain.getAllBlocksToUser(hashID)) {
             if (b.Value() >= value) {
                 return b;
             }
         }
-        return chain.Head();
+        return null;
     }
 
+    /**
+     * Cria uma transação e a envia aos pares
+     *
+     * @param targetHash Usuário alvo da transação
+     * @param value Valor a ser transferido
+     */
     private void createTransaction(String targetHash, float value) {
         try {
 
+            Block fund = SearchValidFundBlock(value);
+            if (fund == null) {
+                System.out.println("Sem um bloco de fundos válido");
+                return;
+            }
+
             Block b = new Block(this.hashID, targetHash, new Date(), chain.Head().Hash(),
-                    SearchValidFundBlock(value), value);
+                    fund, value);
 
             unconfirmedTransactions.add(b);
 
-            //BroadCast
+            //Broadcast
             byte[] data = (BCTimestampServer.TRANSACTIONSTARTBROADCAST + ":" + b.toString()).getBytes();
 
             DatagramPacket p;
@@ -161,6 +192,12 @@ public class BCWallet extends BCClient {
         }
     }
 
+    /**
+     * Adiciona um par à lista desta carteira
+     *
+     * @param HashID Id do par
+     * @param address Endereco eletronico do par
+     */
     @Override
     public void addPeer(String HashID, InetAddress address) {
         System.out.println("Receiving peer");
@@ -170,12 +207,17 @@ public class BCWallet extends BCClient {
         miners.put(HashID, address);
     }
 
+    /**
+     * Recupera a blockchain atualizada do servidor
+     *
+     * @return a Blockchain atualizada
+     */
     private BlockChain getBlockchainFromServer() {
         byte[] data = (BCTimestampServer.ASKFORCHAIN + "").getBytes();
-        
+
         byte[] recvBuf = new byte[50 * 1024];
         try {
-            socket.send(new DatagramPacket(data, data.length,server,BCTimestampServer.SERVERRECEIVEPORT));
+            socket.send(new DatagramPacket(data, data.length, server, BCTimestampServer.SERVERRECEIVEPORT));
             DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
             socket.receive(packet);
 
@@ -186,26 +228,32 @@ public class BCWallet extends BCClient {
             return (BlockChain) o;
         } catch (Exception e) {
         }
-        
-        
+
         return new BlockChain();
     }
 
+    /**
+     * Recebe a confirmação que uma transação foi validada
+     *
+     * @param blockHash
+     */
     public void confirmTransaction(String blockHash) {
         Block conf = null;
         for (Block b : unconfirmedTransactions) {
             if (b.Hash().equals(blockHash)) {
                 conf = b;
                 myTransactions.add(b);
-                break;
+                unconfirmedTransactions.remove(conf);
+                System.out.println("Transaction Confirmed");
+                System.out.println(conf.toStringLines());
+                System.out.println("Your Balance: " + getBalance());
+                return;
             }
         }
-        if (conf != null) {
-            unconfirmedTransactions.remove(conf);
-            System.out.println("Transaction Confirmed");
-            System.out.println(conf.toStringLines());
-            System.out.println("Your Balance: " + getBalance());
-        }
+    }
+    
+    public String ID(){
+        return this.hashID;
     }
 
 }
