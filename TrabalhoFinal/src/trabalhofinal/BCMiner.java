@@ -5,6 +5,7 @@
  */
 package trabalhofinal;
 
+import MinerUI.MinerFrame;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
@@ -38,8 +39,12 @@ public class BCMiner extends BCClient {
     private DatagramSocket socket;
 
     private float timeup = 5;
-    
+
     private int powdif = 4;
+
+    private int nonce = 0;
+
+    private MinerFrame frame;
 
     /**
      * Construtor para o programa minerador
@@ -77,7 +82,6 @@ public class BCMiner extends BCClient {
             long startTime = date.getTime();
 
             //Por 5 segundos espera respostas de peers ou miners ou do servidor
-            
             while (currentTime - startTime < timeup * 1000) {
                 System.out.println("Waiting for a response");
                 byte[] recvBuf = new byte[15000];
@@ -95,17 +99,17 @@ public class BCMiner extends BCClient {
                 System.out.println("Broadcast response: " + new String(receivePacket.getData()).trim() + " " + receivePacket.getAddress().getHostAddress());
 
                 String recData = new String(receivePacket.getData()).trim();
-                
+
                 if (recData.split(":")[0].equals(BCTimestampServer.SERVERDISCOVERYRESPONSE + "")) {
                     server = receivePacket.getAddress();
                     System.out.println("Server acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
                 if (recData.split(":")[0].equals(BCTimestampServer.PEERRESPONSE + "")) {
-                    peers.put(recData.split(":")[1],receivePacket.getAddress());
+                    peers.put(recData.split(":")[1], receivePacket.getAddress());
                     System.out.println("Peer acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
                 if (recData.split(":")[0].equals(BCTimestampServer.MINERRESPONSE + "")) {
-                    miners.put(recData.split(":")[1],receivePacket.getAddress());
+                    miners.put(recData.split(":")[1], receivePacket.getAddress());
                     System.out.println("Miner acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
 
@@ -116,6 +120,8 @@ public class BCMiner extends BCClient {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+
+        frame = new MinerFrame(this);
 
         chain = getBlockchainFromServer();
         System.out.println(chain.toStringLines());
@@ -143,19 +149,20 @@ public class BCMiner extends BCClient {
 
     /**
      * Envia uma mensagem para receber a blockchain do servidor
+     *
      * @return A blockchain atualizada do servidor
      */
     private BlockChain getBlockchainFromServer() {
         byte[] data = (BCTimestampServer.ASKFORCHAIN + "").getBytes();
-        if(server == null){
+        if (server == null) {
             return new BlockChain();
         }
         byte[] recvBuf = new byte[50 * 1024];
         try {
-            socket.send(new DatagramPacket(data, data.length,server,BCTimestampServer.SERVERRECEIVEPORT));
+            socket.send(new DatagramPacket(data, data.length, server, BCTimestampServer.SERVERRECEIVEPORT));
             DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
             socket.receive(packet);
-            
+
             ByteArrayInputStream byteStream = new ByteArrayInputStream(packet.getData());
             ObjectInputStream objectIStream = new ObjectInputStream(new BufferedInputStream(byteStream));
             Object o = objectIStream.readObject();
@@ -163,13 +170,28 @@ public class BCMiner extends BCClient {
             return (BlockChain) o;
         } catch (Exception e) {
         }
-        
-        
+
         return new BlockChain();
     }
 
     /**
+     * Retorna para a GUI o estado do bloco sendo trabalhado atualmente
+     *
+     * @return O Bloco sendo trabalhado atualmente
+     */
+    public String getWorkingAsString() {
+        String ans = "";
+        if (working != null) {
+            ans = "Hash: " + working.Hash() + System.lineSeparator() + "Owner: " + working.ID()
+                    + System.lineSeparator() + "Target: " + working.target() + System.lineSeparator()
+                    + "Nonce: " + nonce;
+        }
+        return ans;
+    }
+
+    /**
      * Adiciona uma nova conexão as existentes
+     *
      * @param HashID ID do peer a adicionar
      * @param address Endereço da net do peer
      */
@@ -184,35 +206,39 @@ public class BCMiner extends BCClient {
 
     /**
      * Recebe um novo bloco para trabalhar
+     *
      * @param b o novo bloco
      */
     public void receiveBlockValidationRequest(Block b) {
-        
+
         if (CheckValid(b)) {
             pending.add(b);
             System.out.println(pending.get(pending.size() - 1));
         } else {
             System.out.println("Invalid Block");
         }
-        
+
     }
 
     /**
-     * Faz a proof of work, um quebra cabeça dificil que leva tempo e garante que os blocos demorem a ser trabalhados.
+     * Faz a proof of work, um quebra cabeça dificil que leva tempo e garante
+     * que os blocos demorem a ser trabalhados.
+     *
      * @return o resultado do quebra cabeça
      */
     public int proofOfWork(int difficulty) {
         try {
             String block = working.Hash();
             String hash = "";
-            int nonce = 0;
+            nonce = 0;
             while (!hash.startsWith(POWdiff(difficulty)) && working != null) {
                 hash = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((block + "" + nonce).getBytes()));
                 nonce++;
-                System.out.println(nonce);
+                frame.updateText();
             }
             if (working != null) {
                 System.out.println(hash.substring(0, 5));
+                frame.updateText();
                 return nonce;
             }
         } catch (Exception e) {
@@ -223,6 +249,7 @@ public class BCMiner extends BCClient {
 
     /**
      * Recebe uma mensagem de que um bloco foi validado
+     *
      * @param b o bloco validado
      */
     public void receiveBlockValidatedRequest(Block b) {
@@ -261,20 +288,21 @@ public class BCMiner extends BCClient {
 
     /**
      * Confere se um bloco é valido
+     *
      * @param b o Bloco
      * @return True se é valido
      */
     private boolean CheckValid(Block b) {
         this.chain = getBlockchainFromServer();
-        if(chain.getBlockByHash(b.fundBlock()) == null){
+        if (chain.getBlockByHash(b.fundBlock()) == null) {
             System.out.println("Inexistant fund block");
             return false;
         }
-        if(!chain.getBlockByHash(b.fundBlock()).target().equals(b.ID())){
+        if (!chain.getBlockByHash(b.fundBlock()).target().equals(b.ID())) {
             System.out.println("Invalid fund block target");
             return false;
         }
-        if(chain.getBlockByHash(b.fundBlock()).Value() < b.Value()){
+        if (chain.getBlockByHash(b.fundBlock()).Value() < b.Value()) {
             System.out.println("Invalid fund block value");
             return false;
         }
@@ -282,23 +310,26 @@ public class BCMiner extends BCClient {
     }
 
     /**
-     * Utilidade para facilitar a comparação de Strings e a variação da dificuldade do POW
-     * @param diff  a dificuldade do teste
+     * Utilidade para facilitar a comparação de Strings e a variação da
+     * dificuldade do POW
+     *
+     * @param diff a dificuldade do teste
      * @return Uma string com tantos 0s quanto a dificuldade
      */
-    private String POWdiff(int diff){
+    private String POWdiff(int diff) {
         String ans = "";
-        for (int i = 0; i < diff; i++){
+        for (int i = 0; i < diff; i++) {
             ans += "0";
         }
         return ans.trim();
     }
-    
+
     /**
      * Retorna o ID do minerador
+     *
      * @return ID
      */
-    public String ID(){
+    public String ID() {
         return this.hashID;
     }
 }

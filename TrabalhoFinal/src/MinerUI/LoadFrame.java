@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package trabalhofinal;
+package MinerUI;
 
 import javax.swing.JFrame;
 

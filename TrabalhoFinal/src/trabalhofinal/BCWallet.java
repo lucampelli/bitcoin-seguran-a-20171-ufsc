@@ -5,6 +5,7 @@
  */
 package trabalhofinal;
 
+import MinerUI.LoadFrame;
 import WalletUI.WalletFrame;
 import java.awt.MouseInfo;
 import java.io.BufferedInputStream;
@@ -280,6 +281,10 @@ public class BCWallet extends BCClient {
         frame.updateText();
     }
 
+    /**
+     * Retorna para a GUI todas as transações feitas por, enviadas a este usuário de forma legível
+     * @return uma string com todas as transações em forma de string simplificada
+     */
     public String getTransactionsAsString() {
         String ans = "";
         for (Block b : chain.getAllBlocksFromUser(hashID)) {

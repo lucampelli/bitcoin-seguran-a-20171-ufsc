@@ -30,7 +30,7 @@ public class TransactionFrame extends javax.swing.JFrame {
         this.frame = frame;
         this.setName("Transação");
         this.setLocationRelativeTo(null);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setVisible(true);
         DefaultListModel model = new DefaultListModel();
         if (wallet.getPeers() != null) {

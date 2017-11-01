@@ -26,7 +26,7 @@ public class WalletFrame extends javax.swing.JFrame {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
         
-        this.setName("Wallet");
+        this.setName("CustoCoin Wallet");
         IDLabel.setText(wallet.ID());
         balanceLabel.setText(wallet.getBalance() + "");
         jTextArea1.setEditable(false);

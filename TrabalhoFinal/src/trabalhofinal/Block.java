@@ -126,6 +126,10 @@ public class Block implements Serializable{
         return change;
     }
     
+    public long getTime(){
+        return timeStamp;
+    }
+    
     public void timeStamp(Date time, String previousHash){
         if(stamped){
             return;

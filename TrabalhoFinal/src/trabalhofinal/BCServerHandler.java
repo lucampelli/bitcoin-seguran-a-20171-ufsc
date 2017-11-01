@@ -28,6 +28,11 @@ public class BCServerHandler implements Runnable {
     BlockChain chain;
     String response = "";
     String command = "";
+    long mediaAlvo = 10000;
+    long media = 0;
+    long bias = 700;
+    long lastArrived = 0;
+    float dificuldade = 4;
     
     /**
      * Handler para que o servidor nao pare
@@ -83,6 +88,16 @@ public class BCServerHandler implements Runnable {
             case BCTimestampServer.TRANSACTIONCONFIRMEDBROADCAST:
                 Block b = new Block(new String(commPacket.getData()).trim().split(":")[1]);
                 System.out.println("Server Received a transaction completed");
+                
+                long intervalo = b.getTime() - lastArrived;
+                media = (media + intervalo)/2;
+                if(media < mediaAlvo - bias){
+                    dificuldade -= 0.1f;
+                }
+                if(media > mediaAlvo + bias){
+                    dificuldade += 0.1f;
+                }
+                lastArrived = b.getTime();
                 chain.addBlock(b);
                 break;
             default:
