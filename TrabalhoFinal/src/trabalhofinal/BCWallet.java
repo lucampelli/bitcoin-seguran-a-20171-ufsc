@@ -130,7 +130,7 @@ public class BCWallet extends BCClient {
         chain = getBlockchainFromServer();
         System.out.println(chain.toStringLines());
 
-        new Thread(new BCClientSocket(this)).start();
+        new Thread(new BCWalletSocket(this)).start();
 
         frame = new WalletFrame(this);
         frame.setVisible(true);

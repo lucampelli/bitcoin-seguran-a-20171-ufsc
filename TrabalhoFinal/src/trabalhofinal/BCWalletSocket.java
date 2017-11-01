@@ -12,9 +12,9 @@ import java.net.InetAddress;
 
 /**
  *
- * @author luca Thread para receber broadcasts de descoberta de outros peers
+ * Thread para receber broadcasts de descoberta de outros peers
  */
-public class BCClientSocket implements Runnable {
+public class BCWalletSocket implements Runnable {
 
     DatagramSocket socket;
     BCWallet client;
@@ -23,7 +23,7 @@ public class BCClientSocket implements Runnable {
      * Este socket se mantém ativo para que uma carteira possa receber mensagens independentemente do que estiver fazendo.
      * @param c A carteira a qual este socket esta atrelado
      */
-    public BCClientSocket(BCWallet c) {
+    public BCWalletSocket(BCWallet c) {
         this.client = c;
     }
 
@@ -31,31 +31,24 @@ public class BCClientSocket implements Runnable {
     public void run() {
         try {
             socket = new DatagramSocket(BCTimestampServer.WALLETRECEIVEPORT, InetAddress.getByName("0.0.0.0"));
-            socket.setSoTimeout(1000);
             socket.setBroadcast(true);
             while (true) {
                 byte[] buf = new byte[15000];
-                DatagramPacket p = new DatagramPacket(buf, buf.length);
-                try {
-                    socket.receive(p);
-                } catch(Exception e){
-                    
-                }
-                byte[] r;
-                //Change
+                DatagramPacket packet = new DatagramPacket(buf, buf.length);
+                socket.receive(packet);
                 
-                
-                if(p.getData() == null){
+                if(packet.getData() == null){
                     continue;
                 }
 
-                String data[] = new String(p.getData()).trim().split(":");
+                byte[] r;
+                String data[] = new String(packet.getData()).trim().split(":");
 
                 if (data[0].equals(BCTimestampServer.DISCOVERY + "")) {
                     System.out.println("Client Received Discovery");
-                    client.addPeer(data[1], p.getAddress());
+                    client.addPeer(data[1], packet.getAddress());
                     r = (BCTimestampServer.PEERRESPONSE + ":" + client.ID()).getBytes();
-                    DatagramPacket response = new DatagramPacket(r, r.length, p.getAddress(), p.getPort());
+                    DatagramPacket response = new DatagramPacket(r, r.length, packet.getAddress(), packet.getPort());
                     socket.send(response);
                 }
 
