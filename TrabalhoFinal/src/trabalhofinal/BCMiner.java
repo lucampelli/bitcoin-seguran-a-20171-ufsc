@@ -5,6 +5,7 @@
  */
 package trabalhofinal;
 
+import MinerUI.LoadFrame;
 import MinerUI.MinerFrame;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -40,11 +41,15 @@ public class BCMiner extends BCClient {
 
     private float timeup = 5;
 
-    private int powdif = 4;
-
     private int nonce = 0;
 
     private MinerFrame frame;
+
+    private long mediaAlvo = 10000;
+    private long media = 0;
+    private long bias = 700;
+    private long lastArrived = 0;
+    private float dificuldade = 4;
 
     /**
      * Construtor para o programa minerador
@@ -81,6 +86,8 @@ public class BCMiner extends BCClient {
 
             long startTime = date.getTime();
 
+            LoadFrame loading = new LoadFrame();
+            
             //Por 5 segundos espera respostas de peers ou miners ou do servidor
             while (currentTime - startTime < timeup * 1000) {
                 System.out.println("Waiting for a response");
@@ -91,6 +98,7 @@ public class BCMiner extends BCClient {
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
                     currentTime = new Date().getTime();
+                    loading.updateLoadingBar((int) ((currentTime - startTime) / 1000));
                     System.out.println("End Cycle:" + ((currentTime - startTime) / 1000));
                     continue;
                 }
@@ -114,8 +122,11 @@ public class BCMiner extends BCClient {
                 }
 
                 currentTime = new Date().getTime();
+                loading.updateLoadingBar((int) ((currentTime - startTime) / 1000));
                 System.out.println("End Cycle:" + ((currentTime - startTime) / 1000.0));
             }
+            loading.setVisible(false);
+            loading.dispose();
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -134,7 +145,8 @@ public class BCMiner extends BCClient {
                     System.out.println("New work");
                     working = pending.get(0);
                 }
-            } else if (proofOfWork(powdif) != -1) {
+            } else if (proofOfWork((int) dificuldade) != -1) {
+
                 System.out.println("POW success");
                 sendBlockValidated();
                 chain.addBlock(working);
@@ -210,12 +222,12 @@ public class BCMiner extends BCClient {
      * @param b o novo bloco
      */
     public void receiveBlockValidationRequest(Block b) {
-
         if (CheckValid(b)) {
             pending.add(b);
             System.out.println(pending.get(pending.size() - 1));
         } else {
             System.out.println("Invalid Block");
+            sendDeniedBroadcast(b);
         }
 
     }
@@ -254,10 +266,20 @@ public class BCMiner extends BCClient {
      */
     public void receiveBlockValidatedRequest(Block b) {
         chain.addBlock(b);
-        if (working.equals(b)) {
+        if (working.Hash().equals(b.Hash())) {
             working = null;
         }
         pending.remove(b);
+
+        long intervalo = b.getTime() - lastArrived;
+        media = (media + intervalo) / 2;
+        if (media < mediaAlvo - bias) {
+            dificuldade -= 0.1f;
+        }
+        if (media > mediaAlvo + bias) {
+            dificuldade += 0.1f;
+        }
+        lastArrived = b.getTime();
     }
 
     /**
@@ -281,6 +303,17 @@ public class BCMiner extends BCClient {
 
             packet = new DatagramPacket(message, message.length, server, BCTimestampServer.SERVERRECEIVEPORT);
             socket.send(packet);
+
+            long intervalo = working.getTime() - lastArrived;
+            media = (media + intervalo) / 2;
+            if (media < mediaAlvo - bias) {
+                dificuldade -= 0.1f;
+            }
+            if (media > mediaAlvo + bias) {
+                dificuldade += 0.1f;
+            }
+            lastArrived = working.getTime();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -331,5 +364,40 @@ public class BCMiner extends BCClient {
      */
     public String ID() {
         return this.hashID;
+    }
+
+    /**
+     * Recebe a mensagem que o bloco b foi negado
+     *
+     * @param b o bloco negado
+     */
+    public void receiveDeniedBlock(Block b) {
+        if (working.Hash().equals(b.Hash())) {
+            working = null;
+        }
+        pending.remove(b);
+    }
+
+    public void sendDeniedBroadcast(Block b) {
+        try {
+            DatagramPacket packet;
+            byte[] message = (BCTimestampServer.TRANSACTIONDENIEDBROADCAST + ":" + working.toString()).getBytes();
+
+            for (InetAddress a : peers.values()) {
+                packet = new DatagramPacket(message, message.length, a, BCTimestampServer.WALLETRECEIVEPORT);
+                socket.send(packet);
+            }
+
+            for (InetAddress a : miners.values()) {
+                packet = new DatagramPacket(message, message.length, a, BCTimestampServer.MINERRECEIVEPORT);
+                socket.send(packet);
+            }
+
+            packet = new DatagramPacket(message, message.length, server, BCTimestampServer.SERVERRECEIVEPORT);
+            socket.send(packet);
+            
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }

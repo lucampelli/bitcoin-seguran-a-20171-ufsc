@@ -64,6 +64,11 @@ public class BCClientSocket implements Runnable {
                     client.confirmTransaction(new Block(data[1]));
                 }
                 
+                if(data[0].equals(BCTimestampServer.TRANSACTIONDENIEDBROADCAST + "")){
+                    System.out.println("Received Note of a Denied Transaction");    //Untested
+                    client.receiveDeniedBlock(new Block(data[1]));
+                }
+                
                 yield();
 
             }

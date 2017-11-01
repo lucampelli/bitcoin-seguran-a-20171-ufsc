@@ -157,6 +157,19 @@ public class BCWallet extends BCClient {
         for (Block b : chain.getAllBlocksFromUser(hashID)) {
             sum += b.change() - b.Value();
         }
+
+        int index = 0;
+
+        for (Block b : unconfirmedTransactions) {
+            long current = new Date().getTime();
+            if (b.getTime() > current + 10000) {
+                break;
+            }
+            index++;
+        }
+        if (index < unconfirmedTransactions.size()) {
+            unconfirmedTransactions.remove(index);
+        }
         return sum;
     }
 
@@ -185,7 +198,6 @@ public class BCWallet extends BCClient {
      */
     public void createTransaction(String targetHash, float value) {
         try {
-
             Block fund = SearchValidFundBlock(value);
             if (fund == null) {
                 System.out.println("Sem um bloco de fundos válido");
@@ -227,6 +239,11 @@ public class BCWallet extends BCClient {
         miners.put(HashID, address);
     }
 
+    /**
+     * Retorna todos os pares que esta carteira possui registrados
+     *
+     * @return
+     */
     public HashMap<String, InetAddress> getPeers() {
         HashMap<String, InetAddress> temp = new HashMap();
         if (!peers.isEmpty()) {
@@ -282,8 +299,11 @@ public class BCWallet extends BCClient {
     }
 
     /**
-     * Retorna para a GUI todas as transações feitas por, enviadas a este usuário de forma legível
-     * @return uma string com todas as transações em forma de string simplificada
+     * Retorna para a GUI todas as transações feitas por, enviadas a este
+     * usuário de forma legível
+     *
+     * @return uma string com todas as transações em forma de string
+     * simplificada
      */
     public String getTransactionsAsString() {
         String ans = "";
@@ -311,6 +331,22 @@ public class BCWallet extends BCClient {
 
     public String ID() {
         return this.hashID;
+    }
+
+    /**
+     * Recebe a mensagem que uma transação foi negada
+     *
+     * @param block o bloco inválido
+     */
+    void receiveDeniedBlock(Block block) {
+        int index = 0;
+        for (Block b : unconfirmedTransactions) {
+            if (b.Hash().equals(block.Hash())) {
+                break;
+            }
+            index++;
+        }
+        unconfirmedTransactions.remove(index);
     }
 
 }

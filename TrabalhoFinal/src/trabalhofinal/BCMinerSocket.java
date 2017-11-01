@@ -62,6 +62,11 @@ public class BCMinerSocket implements Runnable {
                     System.out.println("Miner Received Transaction Confirmation");
                     client.receiveBlockValidatedRequest(new Block(data[1]));
                 }
+                
+                if(data[0].equals(BCTimestampServer.TRANSACTIONDENIEDBROADCAST + "")){
+                    System.out.println("Miner Received Note of a Denied Transaction");  //Untested
+                    client.receiveDeniedBlock(new Block(data[1]));
+                }
 
                 yield();
             }
