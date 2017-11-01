@@ -5,6 +5,8 @@
  */
 package trabalhofinal;
 
+import WalletUI.WalletFrame;
+import java.awt.MouseInfo;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -12,9 +14,11 @@ import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -23,11 +27,11 @@ import java.util.HashMap;
 public class BCWallet extends BCClient {
 
     private BlockChain chain;
-    private ArrayList<Block> myTransactions;
     private ArrayList<Block> unconfirmedTransactions;
 
     private InetAddress server;
     private HashMap<String, InetAddress> miners;
+    private HashMap<String, InetAddress> peers;
 
     private String hashID = "";
 
@@ -37,19 +41,19 @@ public class BCWallet extends BCClient {
 
     private float timeup = 5;
 
+    private WalletFrame frame;
+
     /**
      * Carteira que mostra o balanco e cria novas transações
      */
     public BCWallet() {
         try {
             balance = 0;
-            //hashID = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((new Date().getTime() + "" + MouseInfo.getPointerInfo().getLocation().x + "" + MouseInfo.getPointerInfo().getLocation().y).getBytes()));
-            hashID = "AC84B32E9D61A4422D1F7AABEF96C326CD2BDD61BFDBF46C2E193EC645B1CA40DD72662FD25B194A1403EDF76B80D18042A220C4DC97966DE718E37F64FFCF9B";
+            hashID = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-256").digest(JOptionPane.showInputDialog("Insira seu nome por favor").getBytes()));
 
             System.out.println("Your Wallet ID:" + hashID);
-
+            peers = new HashMap();
             miners = new HashMap();
-            myTransactions = new ArrayList<>();
             unconfirmedTransactions = new ArrayList<>();
 
             socket = new DatagramSocket();
@@ -76,6 +80,8 @@ public class BCWallet extends BCClient {
 
             long startTime = date.getTime();
 
+            LoadFrame loading = new LoadFrame();
+
             //Por 5 segundos espera quantas respostas vierem
             while (currentTime - startTime < timeup * 1000) {
                 System.out.println("Waiting for a response");
@@ -87,6 +93,8 @@ public class BCWallet extends BCClient {
                     System.out.println(e.getMessage());
                     currentTime = new Date().getTime();
                     System.out.println("End Cycle:" + ((currentTime - startTime) / 1000.0));
+                    currentTime = new Date().getTime();
+                    loading.updateLoadingBar((int) ((currentTime - startTime) / 1000));
                     continue;
                 }
 
@@ -103,10 +111,17 @@ public class BCWallet extends BCClient {
                     miners.put(recData.split(":")[1], receivePacket.getAddress());
                     System.out.println("Miner acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
+                if (recData.split(":")[0].equals(BCTimestampServer.PEERRESPONSE + "")) {
+                    peers.put(recData.split(":")[1], receivePacket.getAddress());
+                    System.out.println("Peer acknowledged: " + (receivePacket.getAddress()).getHostAddress());
+                }
 
                 currentTime = new Date().getTime();
-                System.out.println("End Cycle:" + ((currentTime - startTime) / 1000.0));
+                loading.updateLoadingBar((int) ((currentTime - startTime) / 1000));
             }
+
+            loading.setVisible(false);
+            loading.dispose();
 
         } catch (Exception ex) {
         }
@@ -116,12 +131,16 @@ public class BCWallet extends BCClient {
 
         new Thread(new BCClientSocket(this)).start();
 
+        frame = new WalletFrame(this);
+        frame.setVisible(true);
+
+        /*
         String target = "AC84B32E9D61A4422D1F7AABEF96C326CD2BDD61BFDBF46C2E193EC645B1CA40DD72662FD25B194A1403EDF76B80D18042A220C4DC97966DE718E37F64FFCF9A";
 
         System.out.println("Your Balance: " + getBalance());
 
         createTransaction(target, 1.0f);
-
+         */
     }
 
     /**
@@ -129,7 +148,7 @@ public class BCWallet extends BCClient {
      *
      * @return o valor do balanco
      */
-    private float getBalance() {
+    public float getBalance() {
         float sum = 0;
         for (Block b : chain.getAllBlocksToUser(hashID)) {
             sum += b.Value();
@@ -163,7 +182,7 @@ public class BCWallet extends BCClient {
      * @param targetHash Usuário alvo da transação
      * @param value Valor a ser transferido
      */
-    private void createTransaction(String targetHash, float value) {
+    public void createTransaction(String targetHash, float value) {
         try {
 
             Block fund = SearchValidFundBlock(value);
@@ -172,7 +191,7 @@ public class BCWallet extends BCClient {
                 return;
             }
 
-            Block b = new Block(this.hashID, targetHash, new Date(), chain.Head().Hash(),
+            Block b = new Block(this.hashID, targetHash, new Date().getTime(), chain.Head().Hash(),
                     fund, value);
 
             unconfirmedTransactions.add(b);
@@ -207,6 +226,17 @@ public class BCWallet extends BCClient {
         miners.put(HashID, address);
     }
 
+    public HashMap<String, InetAddress> getPeers() {
+        HashMap<String, InetAddress> temp = new HashMap();
+        if (!peers.isEmpty()) {
+            temp.putAll(peers);
+        }
+        if (!miners.isEmpty()) {
+            temp.putAll(miners);
+        }
+        return temp;
+    }
+
     /**
      * Recupera a blockchain atualizada do servidor
      *
@@ -237,22 +267,44 @@ public class BCWallet extends BCClient {
      *
      * @param blockHash
      */
-    public void confirmTransaction(String blockHash) {
-        Block conf = null;
+    public void confirmTransaction(Block confirmed) {
+        chain.addBlock(confirmed);
+        int index = -1;
         for (Block b : unconfirmedTransactions) {
-            if (b.Hash().equals(blockHash)) {
-                conf = b;
-                myTransactions.add(b);
-                unconfirmedTransactions.remove(conf);
-                System.out.println("Transaction Confirmed");
-                System.out.println(conf.toStringLines());
-                System.out.println("Your Balance: " + getBalance());
-                return;
+            index++;
+            if (b.Hash().equals(confirmed.Hash())) {
+                break;
             }
         }
+        unconfirmedTransactions.remove(index);
+        frame.updateText();
     }
-    
-    public String ID(){
+
+    public String getTransactionsAsString() {
+        String ans = "";
+        for (Block b : chain.getAllBlocksFromUser(hashID)) {
+            ans += "Transação:" + System.lineSeparator() + "    Alvo: " + b.target() + System.lineSeparator()
+                    + "    Value: " + b.Value() + "    Change: " + b.change() + System.lineSeparator()
+                    + "Status: Confirmada" + System.lineSeparator();
+        }
+        for (Block b : unconfirmedTransactions) {
+            ans += "Transação:" + System.lineSeparator() + "    Alvo: " + b.target() + System.lineSeparator()
+                    + "    Value: " + b.Value() + "    Change: " + b.change() + System.lineSeparator()
+                    + "Status: Pendente" + System.lineSeparator();
+        }
+        for (Block b : chain.getAllBlocksToUser(hashID)) {
+            String owner = b.ID();
+            if (owner.equals("")) {
+                owner = "<Matriz>";
+            }
+            ans += "Transação:" + System.lineSeparator() + "    Dono: " + owner + System.lineSeparator()
+                    + "    Value: " + b.Value() + System.lineSeparator() + "    Hash: " + b.Hash() + System.lineSeparator();
+        }
+
+        return ans;
+    }
+
+    public String ID() {
         return this.hashID;
     }
 

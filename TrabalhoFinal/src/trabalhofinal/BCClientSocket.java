@@ -60,7 +60,8 @@ public class BCClientSocket implements Runnable {
                 }
 
                 if (data[0].equals(BCTimestampServer.TRANSACTIONCONFIRMEDBROADCAST + "")) {
-                    client.confirmTransaction(data[1]);
+                    System.out.println("Received Confirm Transaction");
+                    client.confirmTransaction(new Block(data[1]));
                 }
                 
                 yield();

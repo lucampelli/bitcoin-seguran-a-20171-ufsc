@@ -47,8 +47,6 @@ public class BCMinerSocket implements Runnable {
 
                 String[] data = new String(p.getData()).trim().split(":");
 
-                System.out.println("DATA: " + data[0]);
-
                 if (data[0].equals(BCTimestampServer.DISCOVERY + "")) {
                     System.out.println("Client Received Discovery");
                     client.addPeer(data[1], p.getAddress());

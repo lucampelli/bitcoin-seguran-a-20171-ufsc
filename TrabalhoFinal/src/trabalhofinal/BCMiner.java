@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -45,9 +46,7 @@ public class BCMiner extends BCClient {
      */
     public BCMiner() {
         try {
-            //ToDo maneira compartilhavel de hash...
-            //hashID = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((new Date().getTime() + "" + MouseInfo.getPointerInfo().getLocation().x + "" + MouseInfo.getPointerInfo().getLocation().y).getBytes()));
-            hashID = "AC84B32E9D61A4422D1F7AABEF96C326CD2BDD61BFDBF46C2E193EC645B1CA40DD72662FD25B194A1403EDF76B80D18042A220C4DC97966DE718E37F64FFCF9A";
+            hashID = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-256").digest(JOptionPane.showInputDialog("Insira seu nome por favor").getBytes()));
             System.out.println("Your Miner ID:" + hashID);
 
             peers = new HashMap();
@@ -153,7 +152,6 @@ public class BCMiner extends BCClient {
         }
         byte[] recvBuf = new byte[50 * 1024];
         try {
-            socket.setSoTimeout(5);
             socket.send(new DatagramPacket(data, data.length,server,BCTimestampServer.SERVERRECEIVEPORT));
             DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
             socket.receive(packet);

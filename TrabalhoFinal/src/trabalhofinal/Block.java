@@ -20,7 +20,7 @@ public class Block implements Serializable{
 
     private String blockOwnerID;
     private String targetID;
-    private Date timeStamp;
+    private long timeStamp;
     private String previousHash;
     private String hash;
     private String fundBlock;
@@ -37,7 +37,7 @@ public class Block implements Serializable{
      * @param fundBlock Bloco de fundos para esta transação
      * @param value Valor da transação
      */
-    public Block(String owner, String target, Date time, String previous, Block fundBlock, float value) {
+    public Block(String owner, String target, long time, String previous, Block fundBlock, float value) {
         try {
             this.blockOwnerID = owner;
             this.targetID = target;
@@ -46,7 +46,7 @@ public class Block implements Serializable{
             this.fundBlock = fundBlock.Hash();
             this.value = value;
             this.change = fundBlock.Value() - value;
-            this.hash = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((this.blockOwnerID + this.targetID + this.timeStamp.toString() + this.previousHash).getBytes()));
+            this.hash = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-512").digest((this.blockOwnerID + this.targetID + this.timeStamp + this.previousHash).getBytes()));
         } catch (NoSuchAlgorithmException ex) {
             System.out.println("Block Error: " + ex.getMessage());
         }
@@ -63,7 +63,7 @@ public class Block implements Serializable{
         try {
             this.blockOwnerID = "";
             this.targetID = target;
-            this.timeStamp = new Date();
+            this.timeStamp = new Date().getTime();
             this.previousHash = order -1 +"";
             this.fundBlock = "";
             this.value = value;
@@ -86,7 +86,7 @@ public class Block implements Serializable{
             }
             this.blockOwnerID = split[0];
             this.targetID = split[1];
-            this.timeStamp = new Date(split[2]);
+            this.timeStamp = Long.parseLong(split[2]);
             this.previousHash = split[3];
             this.fundBlock = split[4];
             this.value = Float.parseFloat(split[5]);
@@ -131,22 +131,24 @@ public class Block implements Serializable{
             return;
         }
         stamped = true;
-        this.timeStamp = time;
+        this.timeStamp = time.getTime();
         this.previousHash = previousHash;
     }
     
     @Override
     public String toString() {
         return this.blockOwnerID + " " + this.targetID + " "
-                + "17/10/01" + " " + this.previousHash + " "
+                + this.timeStamp + " " + this.previousHash + " "
                 + this.fundBlock + " " + this.value + " " + this.change + " " + this.hash;
     }
     
     //Debug purposes
     public String toStringLines() {
         return this.blockOwnerID + System.lineSeparator() + this.targetID + System.lineSeparator()
-                + "17/10/01" + System.lineSeparator() + this.previousHash + System.lineSeparator()
+                + this.timeStamp + System.lineSeparator() + this.previousHash + System.lineSeparator()
                 + this.fundBlock + System.lineSeparator() + this.value + System.lineSeparator() + this.change + System.lineSeparator() + this.hash + System.lineSeparator();
     }
+    
+    
 
 }
