@@ -14,12 +14,9 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
- *
- * @author luca Thread que cuida de responder as mensagens do servidor
+ * Thread que cuida de responder as mensagens do servidor
  */
 public class BCServerHandler implements Runnable {
 
@@ -28,13 +25,14 @@ public class BCServerHandler implements Runnable {
     BlockChain chain;
     String response = "";
     String command = "";
-    
+
     /**
      * Handler para que o servidor nao pare
+     *
      * @param comPacket
      * @param socket
      * @throws SocketException
-     * @throws UnknownHostException 
+     * @throws UnknownHostException
      */
     public BCServerHandler(DatagramPacket comPacket, DatagramSocket socket) throws SocketException, UnknownHostException {
         this.socket = socket;
@@ -44,10 +42,11 @@ public class BCServerHandler implements Runnable {
 
     /**
      * Handler para que o servidor nao pare, já com uma chain criada
+     *
      * @param comPacket
      * @param socket
      * @throws SocketException
-     * @throws UnknownHostException 
+     * @throws UnknownHostException
      */
     public BCServerHandler(DatagramPacket comPacket, DatagramSocket socket, BlockChain chain) throws SocketException, UnknownHostException {
         this.socket = socket;
@@ -64,7 +63,7 @@ public class BCServerHandler implements Runnable {
             case BCTimestampServer.DISCOVERY:
                 boolean t = false;
                 for (Block b : chain.getAllBlocksToUser(new String(commPacket.getData()).trim().split(":")[1])) {
-                    if (b.ID() == "") {
+                    if (b.ID().isEmpty()) {
                         t = true;
                     }
                 }
@@ -110,8 +109,9 @@ public class BCServerHandler implements Runnable {
      */
     public void sendTo(Object o, InetAddress address, int port) {
         try (
-                ByteArrayOutputStream byteStream = new ByteArrayOutputStream(50 * 1024);
-                ObjectOutputStream os = new ObjectOutputStream(new BufferedOutputStream(byteStream))) {
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream(50 * 1024);
+            ObjectOutputStream os = new ObjectOutputStream(new BufferedOutputStream(byteStream))
+        ) {
             os.flush();
             os.writeObject(o);
             os.flush();

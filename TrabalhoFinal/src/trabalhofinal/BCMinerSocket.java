@@ -12,7 +12,7 @@ import java.net.InetAddress;
 
 /**
  *
- * @author luca Thread para os mineradores receberem broadcasts de novos blocos
+ * Thread para os mineradores receberem broadcasts de novos blocos
  * e peers
  */
 public class BCMinerSocket implements Runnable {
@@ -32,7 +32,6 @@ public class BCMinerSocket implements Runnable {
     public void run() {
         try {
             socket = new DatagramSocket(BCTimestampServer.MINERRECEIVEPORT, InetAddress.getByName("0.0.0.0"));
-            socket.setSoTimeout(1000);
             socket.setBroadcast(true);
             while (true) {
                 byte[] buf = new byte[15000];

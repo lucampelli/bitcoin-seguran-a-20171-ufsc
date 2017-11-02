@@ -23,7 +23,7 @@ import javax.swing.JOptionPane;
 
 /**
  *
- * @author luca Programa Minerador
+ * Programa Minerador
  */
 public class BCMiner extends BCClient {
 
@@ -349,12 +349,12 @@ public class BCMiner extends BCClient {
      * @param diff a dificuldade do teste
      * @return Uma string com tantos 0s quanto a dificuldade
      */
-    private String POWdiff(int diff) {
-        String ans = "";
-        for (int i = 0; i < diff; i++) {
-            ans += "0";
+    private String POWdiff(int diff){
+        StringBuilder ans = new StringBuilder();
+        for (int i = 0; i < diff; i++){
+            ans.append("0");
         }
-        return ans.trim();
+        return ans.toString().trim();
     }
 
     /**

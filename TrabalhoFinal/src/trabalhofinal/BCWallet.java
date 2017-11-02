@@ -306,27 +306,33 @@ public class BCWallet extends BCClient {
      * simplificada
      */
     public String getTransactionsAsString() {
-        String ans = "";
+        StringBuilder ans = new StringBuilder();
         for (Block b : chain.getAllBlocksFromUser(hashID)) {
-            ans += "Transação:" + System.lineSeparator() + "    Alvo: " + b.target() + System.lineSeparator()
-                    + "    Value: " + b.Value() + "    Change: " + b.change() + System.lineSeparator()
-                    + "Status: Confirmada" + System.lineSeparator();
+            ans.append("Transação:").append(System.lineSeparator())
+                .append("    Alvo: ").append(b.target()).append(System.lineSeparator())
+                .append("    Value: ").append(b.Value())
+                .append("    Change: ").append(b.change()).append(System.lineSeparator())
+                .append("Status: Confirmada").append(System.lineSeparator());
         }
         for (Block b : unconfirmedTransactions) {
-            ans += "Transação:" + System.lineSeparator() + "    Alvo: " + b.target() + System.lineSeparator()
-                    + "    Value: " + b.Value() + "    Change: " + b.change() + System.lineSeparator()
-                    + "Status: Pendente" + System.lineSeparator();
+            ans.append("Transação:").append(System.lineSeparator())
+                .append("    Alvo: ").append(b.target()).append(System.lineSeparator())
+                .append("    Value: ").append(b.Value())
+                .append("    Change: ").append(b.change()).append(System.lineSeparator())
+                .append("Status: Pendente").append(System.lineSeparator());
         }
         for (Block b : chain.getAllBlocksToUser(hashID)) {
             String owner = b.ID();
             if (owner.equals("")) {
                 owner = "<Matriz>";
             }
-            ans += "Transação:" + System.lineSeparator() + "    Dono: " + owner + System.lineSeparator()
-                    + "    Value: " + b.Value() + System.lineSeparator() + "    Hash: " + b.Hash() + System.lineSeparator();
+            ans.append("Transação:").append(System.lineSeparator())
+                .append("    Dono: ").append(owner).append(System.lineSeparator())
+                .append("    Value: ").append(b.Value()).append(System.lineSeparator())
+                .append("    Hash: ").append(b.Hash()).append(System.lineSeparator());
         }
 
-        return ans;
+        return ans.toString();
     }
 
     public String ID() {
