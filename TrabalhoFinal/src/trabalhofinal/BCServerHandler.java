@@ -103,20 +103,10 @@ public class BCServerHandler implements Runnable {
 
     /**
      * Função que envia um objeto à um par
-     * @param o
-     * @param hostname
-     * @param port
-     * @throws IOException 
-     */
-    public void sendTo(Object o, String hostname, int port) throws IOException {
-        sendTo(o, InetAddress.getByName(hostname), port);
-    }
-
-    /**
-     * Função que envia um objeto à um par
-     * @param o
-     * @param address
-     * @param port 
+     *
+     * @param o       Objeto que será serializado
+     * @param address endereço do destinatário
+     * @param port    porta do processo do destinatário
      */
     public void sendTo(Object o, InetAddress address, int port) {
         try (
