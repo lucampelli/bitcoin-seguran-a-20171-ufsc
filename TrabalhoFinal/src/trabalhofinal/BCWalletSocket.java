@@ -5,10 +5,12 @@
  */
 package trabalhofinal;
 
-import static java.lang.Thread.yield;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.MulticastSocket;
+
+import static java.lang.Thread.yield;
+import static trabalhofinal.BCTimestampServer.*;
 
 /**
  *
@@ -16,7 +18,7 @@ import java.net.InetAddress;
  */
 public class BCWalletSocket implements Runnable {
 
-    DatagramSocket socket;
+    MulticastSocket socket;
     BCWallet client;
 
     /**
@@ -30,8 +32,9 @@ public class BCWalletSocket implements Runnable {
     @Override
     public void run() {
         try {
-            socket = new DatagramSocket(BCTimestampServer.WALLETRECEIVEPORT, InetAddress.getByName("0.0.0.0"));
-            socket.setBroadcast(true);
+            socket = new MulticastSocket(WALLETRECEIVEPORT);
+            socket.joinGroup(InetAddress.getByName(MULTICAST_GROUP_ADDRESS));
+
             while (true) {
                 byte[] buf = new byte[15000];
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
@@ -44,20 +47,20 @@ public class BCWalletSocket implements Runnable {
                 byte[] r;
                 String data[] = new String(packet.getData()).trim().split(":");
 
-                if (data[0].equals(BCTimestampServer.DISCOVERY + "")) {
+                if (data[0].equals(DISCOVERY + "")) {
                     System.out.println("Client Received Discovery");
                     client.addPeer(data[1], packet.getAddress());
-                    r = (BCTimestampServer.PEERRESPONSE + ":" + client.ID()).getBytes();
+                    r = (PEERRESPONSE + ":" + client.ID()).getBytes();
                     DatagramPacket response = new DatagramPacket(r, r.length, packet.getAddress(), packet.getPort());
                     socket.send(response);
                 }
 
-                if (data[0].equals(BCTimestampServer.TRANSACTIONCONFIRMEDBROADCAST + "")) {
+                if (data[0].equals(TRANSACTIONCONFIRMEDBROADCAST + "")) {
                     System.out.println("Received Confirm Transaction");
                     client.confirmTransaction(new Block(data[1]));
                 }
                 
-                if(data[0].equals(BCTimestampServer.TRANSACTIONDENIEDBROADCAST + "")){
+                if(data[0].equals(TRANSACTIONDENIEDBROADCAST + "")){
                     System.out.println("Received Note of a Denied Transaction");    //Untested
                     client.receiveDeniedBlock(new Block(data[1]));
                 }

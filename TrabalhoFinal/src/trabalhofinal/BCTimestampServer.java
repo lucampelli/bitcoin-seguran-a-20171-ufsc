@@ -6,33 +6,42 @@
 package trabalhofinal;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.net.*;
 
 /**
  *
- * @author luca
  * Servidor timesstamp que mantém uma cópia atualizada da blockchain
  */
 public class BCTimestampServer implements Runnable {
 
     
     private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
-    
+
+    /**
+     * Endereço IP usado para comunicação Multicast
+     */
+    public static final String MULTICAST_GROUP_ADDRESS = "225.3.3.5";
+
+    /**
+     * Definição das portas onde rodará cada processo
+     */
     public final static short SERVERRECEIVEPORT = 8888;
     public final static short SERVERSENDPORT = 8889;
     public final static short MINERRECEIVEPORT = 8890;
     public final static short WALLETRECEIVEPORT = 8891;
 
+    /**
+     * Identificadores das mensagens
+     */
     public final static short DISCOVERY = 1;
     public final static short ASKFORCHAIN = 2;
     public final static short TRANSACTIONSTARTBROADCAST = 3;
     public final static short TRANSACTIONCONFIRMEDBROADCAST = 4;
     public final static short TRANSACTIONDENIEDBROADCAST = 5;
 
+    /**
+     * Indetificador das repostas
+     */
     public final static short SERVERDISCOVERYRESPONSE = 10;
     public final static short CHAINRESPONSE = 20;
     public final static short PEERRESPONSE = 30;
@@ -44,7 +53,7 @@ public class BCTimestampServer implements Runnable {
 
     public BlockChain chain;
     
-    private DatagramSocket socketRec;
+    private MulticastSocket socketRec;
     private DatagramSocket socketSend;
 
     public static BCTimestampServer getInstance() {
@@ -56,12 +65,11 @@ public class BCTimestampServer implements Runnable {
 
     private BCTimestampServer() {
         try {
-            socketRec = new DatagramSocket(SERVERRECEIVEPORT, InetAddress.getByName("0.0.0.0"));
-            socketRec.setBroadcast(true);
-            socketSend = new DatagramSocket(SERVERSENDPORT, InetAddress.getByName("0.0.0.0"));
+            socketRec = new MulticastSocket(SERVERRECEIVEPORT);
+            socketRec.joinGroup(InetAddress.getByName(MULTICAST_GROUP_ADDRESS));
+            socketSend = new DatagramSocket(SERVERSENDPORT);
             chain = new BlockChain();
-
-        } catch (SocketException | UnknownHostException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
