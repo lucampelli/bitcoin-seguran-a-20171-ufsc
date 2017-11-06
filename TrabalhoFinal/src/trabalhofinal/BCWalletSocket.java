@@ -22,7 +22,9 @@ public class BCWalletSocket implements Runnable {
     BCWallet client;
 
     /**
-     * Este socket se mantém ativo para que uma carteira possa receber mensagens independentemente do que estiver fazendo.
+     * Este socket se mantém ativo para que uma carteira possa receber mensagens
+     * independentemente do que estiver fazendo.
+     *
      * @param c A carteira a qual este socket esta atrelado
      */
     public BCWalletSocket(BCWallet c) {
@@ -34,13 +36,18 @@ public class BCWalletSocket implements Runnable {
         try {
             socket = new MulticastSocket(WALLETRECEIVEPORT);
             socket.joinGroup(InetAddress.getByName(MULTICAST_GROUP_ADDRESS));
-
+            socket.setSoTimeout(1000);
+            socket.setBroadcast(true);
             while (true) {
                 byte[] buf = new byte[15000];
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
-                socket.receive(packet);
-                
-                if(packet.getData() == null){
+
+                try {
+                    socket.receive(packet);
+                } catch (Exception e) {
+                }
+
+                if (packet.getData() == null) {
                     continue;
                 }
 
@@ -59,12 +66,12 @@ public class BCWalletSocket implements Runnable {
                     System.out.println("Received Confirm Transaction");
                     client.confirmTransaction(new Block(data[1]));
                 }
-                
-                if(data[0].equals(TRANSACTIONDENIEDBROADCAST + "")){
+
+                if (data[0].equals(TRANSACTIONDENIEDBROADCAST + "")) {
                     System.out.println("Received Note of a Denied Transaction");    //Untested
                     client.receiveDeniedBlock(new Block(data[1]));
                 }
-                
+
                 yield();
 
             }

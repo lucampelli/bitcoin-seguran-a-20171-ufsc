@@ -293,10 +293,10 @@ public class BCWallet extends BCClient {
         for (Block b : unconfirmedTransactions) {
             index++;
             if (b.Hash().equals(confirmed.Hash())) {
+                unconfirmedTransactions.remove(index);
                 break;
             }
         }
-        unconfirmedTransactions.remove(index);
         frame.updateText();
     }
 
