@@ -67,6 +67,7 @@ public class BCTimestampServer implements Runnable {
         try {
             socketRec = new MulticastSocket(SERVERRECEIVEPORT);
             socketRec.joinGroup(InetAddress.getByName(MULTICAST_GROUP_ADDRESS));
+            socketRec.setBroadcast(true);
             socketSend = new DatagramSocket(SERVERSENDPORT);
             chain = new BlockChain();
         } catch (IOException e) {
@@ -76,7 +77,7 @@ public class BCTimestampServer implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("Server address:" + socketRec.getLocalAddress().getHostAddress() + ":" + socketRec.getLocalPort());
+        System.out.println("Server address:" + socketRec.getLocalSocketAddress());
         while (true) {
             try {
                 System.out.println(getClass().getName() + " is ready to receive requests");
