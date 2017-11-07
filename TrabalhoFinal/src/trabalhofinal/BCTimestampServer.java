@@ -20,7 +20,7 @@ public class BCTimestampServer implements Runnable {
     /**
      * Endereço IP usado para comunicação Multicast
      */
-    public static final String MULTICAST_GROUP_ADDRESS = "225.3.3.5";
+    public static final String MULTICAST_GROUP_ADDRESS = "230.0.0.1";
 
     /**
      * Definição das portas onde rodará cada processo

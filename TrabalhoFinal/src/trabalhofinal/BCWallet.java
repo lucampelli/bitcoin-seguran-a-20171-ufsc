@@ -60,6 +60,7 @@ public class BCWallet extends BCClient {
 
             socket = new MulticastSocket();
             socket.joinGroup(InetAddress.getByName(MULTICAST_GROUP_ADDRESS));
+            socket.setBroadcast(true);
 
             byte[] data = (DISCOVERY + ":" + hashID).getBytes();
             List<Short> ports = Arrays.asList(SERVERRECEIVEPORT, MINERRECEIVEPORT, WALLETRECEIVEPORT);
@@ -314,7 +315,7 @@ public class BCWallet extends BCClient {
                     .append("    Alvo: ").append(b.target()).append(System.lineSeparator())
                     .append("    Value: ").append(b.Value())
                     .append("    Change: ").append(b.change()).append(System.lineSeparator())
-                    .append("Hash:").append(b.Hash())
+                    .append("Hash:").append(b.Hash()).append(System.lineSeparator())
                     .append("Status: Confirmada").append(System.lineSeparator());
         }
         for (Block b : unconfirmedTransactions) {
@@ -322,7 +323,7 @@ public class BCWallet extends BCClient {
                     .append("    Alvo: ").append(b.target()).append(System.lineSeparator())
                     .append("    Value: ").append(b.Value())
                     .append("    Change: ").append(b.change()).append(System.lineSeparator())
-                    .append("Hash:").append(b.Hash())
+                    .append("Hash:").append(b.Hash()).append(System.lineSeparator())
                     .append("Status: Pendente").append(System.lineSeparator());
         }
         for (Block b : chain.getAllBlocksToUser(hashID)) {
@@ -357,6 +358,7 @@ public class BCWallet extends BCClient {
             index++;
         }
         unconfirmedTransactions.remove(index);
+        frame.updateText();
     }
 
 }

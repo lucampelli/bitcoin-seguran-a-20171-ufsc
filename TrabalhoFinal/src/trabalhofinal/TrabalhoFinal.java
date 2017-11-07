@@ -5,7 +5,7 @@
  */
 package trabalhofinal;
 
-/**
+/**frame.updateText();
  *
  * @author luca
  * Main

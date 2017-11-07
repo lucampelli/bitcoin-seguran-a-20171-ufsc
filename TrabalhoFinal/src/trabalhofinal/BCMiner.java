@@ -14,12 +14,18 @@ import static java.lang.Thread.yield;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.JOptionPane;
+import static trabalhofinal.BCTimestampServer.MINERRECEIVEPORT;
+import static trabalhofinal.BCTimestampServer.MULTICAST_GROUP_ADDRESS;
+import static trabalhofinal.BCTimestampServer.SERVERRECEIVEPORT;
+import static trabalhofinal.BCTimestampServer.WALLETRECEIVEPORT;
 
 /**
  *
@@ -37,7 +43,7 @@ public class BCMiner extends BCClient {
 
     private String hashID = "";
 
-    private DatagramSocket socket;
+    private MulticastSocket socket;
 
     private float timeup = 5;
 
@@ -63,18 +69,21 @@ public class BCMiner extends BCClient {
             miners = new HashMap();
             pending = new ArrayList<>();
 
-            socket = new DatagramSocket();
+            socket = new MulticastSocket();
+            socket.joinGroup(InetAddress.getByName(MULTICAST_GROUP_ADDRESS));
             socket.setBroadcast(true);
 
             byte[] data = (BCTimestampServer.DISCOVERY + ":" + hashID).getBytes();
-            DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.SERVERRECEIVEPORT); // broadcast for peers and server
-            DatagramPacket packet1 = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.MINERRECEIVEPORT);// para conseguir testar em um computador só
-            DatagramPacket packet2 = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.WALLETRECEIVEPORT);
-
-            socket.send(packet);
-
-            socket.send(packet1);// para conseguir testar em um computador só
-            socket.send(packet2);
+            List<Short> ports = Arrays.asList(SERVERRECEIVEPORT, MINERRECEIVEPORT, WALLETRECEIVEPORT);
+            for (short port : ports) {
+                DatagramPacket packet = new DatagramPacket(
+                        data,
+                        data.length,
+                        InetAddress.getByName(MULTICAST_GROUP_ADDRESS),
+                        port
+                ); // broadcast for peers and server
+                socket.send(packet);
+            }
 
             System.out.println("Looking for Peers: " + socket.getLocalAddress());
 
@@ -381,7 +390,7 @@ public class BCMiner extends BCClient {
     public void sendDeniedBroadcast(Block b) {
         try {
             DatagramPacket packet;
-            byte[] message = (BCTimestampServer.TRANSACTIONDENIEDBROADCAST + ":" + working.toString()).getBytes();
+            byte[] message = (BCTimestampServer.TRANSACTIONDENIEDBROADCAST + ":" + b.toString()).getBytes();
 
             for (InetAddress a : peers.values()) {
                 packet = new DatagramPacket(message, message.length, a, BCTimestampServer.WALLETRECEIVEPORT);
