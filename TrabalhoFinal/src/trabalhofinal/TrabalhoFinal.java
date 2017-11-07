@@ -17,8 +17,8 @@ public class TrabalhoFinal {
      */
     public static void main(String[] args) {
         //new Thread(BCTimestampServer.getInstance()).start();
-        //BCWallet wallet = new BCWallet();
-        BCMiner miner = new BCMiner();
+        BCWallet wallet = new BCWallet();
+        //BCMiner miner = new BCMiner();
     }
 
 }

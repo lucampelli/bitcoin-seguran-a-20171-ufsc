@@ -17,10 +17,11 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import javax.swing.JOptionPane;
-
+import static trabalhofinal.BCTimestampServer.*;
 /**
  *
  * @author luca Programa Carteira
@@ -50,7 +51,7 @@ public class BCWallet extends BCClient {
     public BCWallet() {
         try {
             balance = 0;
-            hashID = BCTimestampServer.bytesToHex(MessageDigest.getInstance("SHA-256").digest(JOptionPane.showInputDialog("Insira seu nome por favor").getBytes()));
+            hashID = bytesToHex(MessageDigest.getInstance("SHA-256").digest(JOptionPane.showInputDialog("Insira seu nome por favor").getBytes()));
 
             System.out.println("Your Wallet ID:" + hashID);
             peers = new HashMap();
@@ -60,16 +61,11 @@ public class BCWallet extends BCClient {
             socket = new DatagramSocket();
             socket.setBroadcast(true);
 
-            byte[] data = (BCTimestampServer.DISCOVERY + ":" + hashID).getBytes();
-            DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.SERVERRECEIVEPORT); // broadcast for peers and server
-
-            DatagramPacket packet1 = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.MINERRECEIVEPORT);
-            DatagramPacket packet2 = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), BCTimestampServer.WALLETRECEIVEPORT);
-
-            socket.send(packet);
-
-            socket.send(packet1);// para conseguir testar em um computador só
-            socket.send(packet2);
+            byte[] data = (DISCOVERY + ":" + hashID).getBytes();
+            for(Short port : Arrays.asList(SERVERRECEIVEPORT, MINERRECEIVEPORT,WALLETRECEIVEPORT)){
+                DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName("255.255.255.255"), port); // broadcast for peers and server
+                socket.send(packet);
+            }
 
             System.out.println("Looking for Peers: " + socket.getLocalAddress());
 
@@ -104,15 +100,15 @@ public class BCWallet extends BCClient {
 
                 String recData = new String(receivePacket.getData()).trim();
 
-                if (recData.split(":")[0].equals(BCTimestampServer.SERVERDISCOVERYRESPONSE + "")) {
+                if (recData.split(":")[0].equals(SERVERDISCOVERYRESPONSE + "")) {
                     server = receivePacket.getAddress();
                     System.out.println("Server acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
-                if (recData.split(":")[0].equals(BCTimestampServer.MINERRESPONSE + "")) {
+                if (recData.split(":")[0].equals(MINERRESPONSE + "")) {
                     miners.put(recData.split(":")[1], receivePacket.getAddress());
                     System.out.println("Miner acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
-                if (recData.split(":")[0].equals(BCTimestampServer.PEERRESPONSE + "")) {
+                if (recData.split(":")[0].equals(PEERRESPONSE + "")) {
                     peers.put(recData.split(":")[1], receivePacket.getAddress());
                     System.out.println("Peer acknowledged: " + (receivePacket.getAddress()).getHostAddress());
                 }
@@ -210,12 +206,12 @@ public class BCWallet extends BCClient {
             unconfirmedTransactions.add(b);
 
             //Broadcast
-            byte[] data = (BCTimestampServer.TRANSACTIONSTARTBROADCAST + ":" + b.toString()).getBytes();
+            byte[] data = (TRANSACTIONSTARTBROADCAST + ":" + b.toString()).getBytes();
 
             DatagramPacket p;
 
             for (InetAddress a : miners.values()) {
-                p = new DatagramPacket(data, data.length, a, BCTimestampServer.MINERRECEIVEPORT);
+                p = new DatagramPacket(data, data.length, a, MINERRECEIVEPORT);
                 System.out.println("New Block");
                 socket.send(p);
             }
@@ -261,11 +257,11 @@ public class BCWallet extends BCClient {
      * @return a Blockchain atualizada
      */
     private BlockChain getBlockchainFromServer() {
-        byte[] data = (BCTimestampServer.ASKFORCHAIN + "").getBytes();
+        byte[] data = (ASKFORCHAIN + "").getBytes();
 
         byte[] recvBuf = new byte[50 * 1024];
         try {
-            socket.send(new DatagramPacket(data, data.length, server, BCTimestampServer.SERVERRECEIVEPORT));
+            socket.send(new DatagramPacket(data, data.length, server, SERVERRECEIVEPORT));
             DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
             socket.receive(packet);
 
