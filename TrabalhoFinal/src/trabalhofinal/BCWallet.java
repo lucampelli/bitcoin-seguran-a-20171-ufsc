@@ -65,10 +65,10 @@ public class BCWallet extends BCClient {
             List<Short> ports = Arrays.asList(SERVERRECEIVEPORT, MINERRECEIVEPORT, WALLETRECEIVEPORT);
             for (short port : ports) {
                 DatagramPacket packet = new DatagramPacket(
-                    data,
-                    data.length,
-                    InetAddress.getByName(MULTICAST_GROUP_ADDRESS),
-                    port
+                        data,
+                        data.length,
+                        InetAddress.getByName(MULTICAST_GROUP_ADDRESS),
+                        port
                 ); // broadcast for peers and server
                 socket.send(packet);
             }
@@ -311,17 +311,19 @@ public class BCWallet extends BCClient {
         StringBuilder ans = new StringBuilder();
         for (Block b : chain.getAllBlocksFromUser(hashID)) {
             ans.append("Transação:").append(System.lineSeparator())
-                .append("    Alvo: ").append(b.target()).append(System.lineSeparator())
-                .append("    Value: ").append(b.Value())
-                .append("    Change: ").append(b.change()).append(System.lineSeparator())
-                .append("Status: Confirmada").append(System.lineSeparator());
+                    .append("    Alvo: ").append(b.target()).append(System.lineSeparator())
+                    .append("    Value: ").append(b.Value())
+                    .append("    Change: ").append(b.change()).append(System.lineSeparator())
+                    .append("Hash:").append(b.Hash())
+                    .append("Status: Confirmada").append(System.lineSeparator());
         }
         for (Block b : unconfirmedTransactions) {
             ans.append("Transação:").append(System.lineSeparator())
-                .append("    Alvo: ").append(b.target()).append(System.lineSeparator())
-                .append("    Value: ").append(b.Value())
-                .append("    Change: ").append(b.change()).append(System.lineSeparator())
-                .append("Status: Pendente").append(System.lineSeparator());
+                    .append("    Alvo: ").append(b.target()).append(System.lineSeparator())
+                    .append("    Value: ").append(b.Value())
+                    .append("    Change: ").append(b.change()).append(System.lineSeparator())
+                    .append("Hash:").append(b.Hash())
+                    .append("Status: Pendente").append(System.lineSeparator());
         }
         for (Block b : chain.getAllBlocksToUser(hashID)) {
             String owner = b.ID();
@@ -329,9 +331,9 @@ public class BCWallet extends BCClient {
                 owner = "<Matriz>";
             }
             ans.append("Transação:").append(System.lineSeparator())
-                .append("    Dono: ").append(owner).append(System.lineSeparator())
-                .append("    Value: ").append(b.Value()).append(System.lineSeparator())
-                .append("    Hash: ").append(b.Hash()).append(System.lineSeparator());
+                    .append("    Dono: ").append(owner).append(System.lineSeparator())
+                    .append("    Value: ").append(b.Value()).append(System.lineSeparator())
+                    .append("    Hash: ").append(b.Hash()).append(System.lineSeparator());
         }
 
         return ans.toString();
