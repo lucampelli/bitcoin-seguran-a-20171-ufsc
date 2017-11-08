@@ -152,10 +152,10 @@ public class BCMiner extends BCClient {
         List<Short> ports = Arrays.asList(SERVERRECEIVEPORT, MINERRECEIVEPORT, WALLETRECEIVEPORT);
         for (short port : ports) {
             DatagramPacket packet = new DatagramPacket(
-                data,
-                data.length,
-                InetAddress.getByName(MULTICAST_GROUP_ADDRESS),
-                port
+                    data,
+                    data.length,
+                    InetAddress.getByName(MULTICAST_GROUP_ADDRESS),
+                    port
             ); // broadcast for peers and server
             socket.send(packet);
         }
@@ -197,8 +197,8 @@ public class BCMiner extends BCClient {
         String ans = "";
         if (working != null) {
             ans = "Hash: " + working.Hash() + System.lineSeparator() + "Owner: " + working.ID()
-                + System.lineSeparator() + "Target: " + working.target() + System.lineSeparator()
-                + "Nonce: " + nonce;
+                    + System.lineSeparator() + "Target: " + working.target() + System.lineSeparator()
+                    + "Nonce: " + nonce;
         }
         return ans;
     }
@@ -206,7 +206,7 @@ public class BCMiner extends BCClient {
     /**
      * Adiciona uma nova conexão as existentes
      *
-     * @param HashID  ID do peer a adicionar
+     * @param HashID ID do peer a adicionar
      * @param address Endereço da net do peer
      */
     @Override
@@ -268,7 +268,7 @@ public class BCMiner extends BCClient {
      */
     public void receiveBlockValidatedRequest(Block b) {
         chain.addBlock(b);
-        if (working.Hash().equals(b.Hash())) {
+        if (working != null && working.Hash().equals(b.Hash())) {
             working = null;
         }
         pending.remove(b);
@@ -293,7 +293,7 @@ public class BCMiner extends BCClient {
             working.timeStamp(new Date(), chain.Head().Hash());
             byte[] message = (BCTimestampServer.TRANSACTIONCONFIRMEDBROADCAST + ":" + working.toString()).getBytes();
 
-            sendBroadcast(message);
+            System.out.println(working == null);
 
             long intervalo = working.getTime() - lastArrived;
             media = (media + intervalo) / 2;
@@ -304,6 +304,8 @@ public class BCMiner extends BCClient {
                 dificuldade += 0.1f;
             }
             lastArrived = working.getTime();
+
+            sendBroadcast(message);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -329,6 +331,12 @@ public class BCMiner extends BCClient {
         if (chain.getBlockByHash(b.fundBlock()).Value() < b.Value()) {
             System.out.println("Invalid fund block value");
             return false;
+        }
+        for (Block block : chain.getAllBlocksFromUser(b.ID())) {
+            if (block.fundBlock().equals(b.fundBlock())) {
+                System.out.println("Block already spent");
+                return false;
+            }
         }
         return true;
     }
@@ -357,13 +365,17 @@ public class BCMiner extends BCClient {
         return this.hashID;
     }
 
+    public int Port() {
+        return socket.getPort();
+    }
+
     /**
      * Recebe a mensagem que o bloco b foi negado
      *
      * @param b o bloco negado
      */
     public void receiveDeniedBlock(Block b) {
-        if (working.Hash().equals(b.Hash())) {
+        if (working != null && working.Hash().equals(b.Hash())) {
             working = null;
         }
         pending.remove(b);

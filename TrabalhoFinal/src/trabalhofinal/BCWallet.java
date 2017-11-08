@@ -58,10 +58,10 @@ public class BCWallet extends BCClient {
             List<Short> ports = Arrays.asList(SERVERRECEIVEPORT, MINERRECEIVEPORT, WALLETRECEIVEPORT);
             for (short port : ports) {
                 DatagramPacket packet = new DatagramPacket(
-                    data,
-                    data.length,
-                    InetAddress.getByName(MULTICAST_GROUP_ADDRESS),
-                    port
+                        data,
+                        data.length,
+                        InetAddress.getByName(MULTICAST_GROUP_ADDRESS),
+                        port
                 ); // broadcast for peers and server
                 socket.send(packet);
             }
@@ -179,7 +179,20 @@ public class BCWallet extends BCClient {
     private Block SearchValidFundBlock(float value) {
         for (Block b : chain.getAllBlocksToUser(hashID)) {
             if (b.Value() >= value) {
-                return b;
+                if(chain.getAllBlocksFromUser(hashID).isEmpty()) {
+                    return b;
+                }
+                boolean spent = false;
+                for (Block block : chain.getAllBlocksFromUser(hashID)) {
+                    if (block.fundBlock().equals(b.Hash())) {
+                        spent = true;
+                        break;
+                    }
+                }
+                if(!spent){
+                    return b;
+                }
+
             }
         }
         return null;
@@ -189,7 +202,7 @@ public class BCWallet extends BCClient {
      * Cria uma transação e a envia aos pares
      *
      * @param targetHash Usuário alvo da transação
-     * @param value      Valor a ser transferido
+     * @param value Valor a ser transferido
      */
     public void createTransaction(String targetHash, float value) {
         try {
@@ -200,7 +213,7 @@ public class BCWallet extends BCClient {
             }
 
             Block b = new Block(this.hashID, targetHash, new Date().getTime(), chain.Head().Hash(),
-                fund, value);
+                    fund, value);
 
             unconfirmedTransactions.add(b);
 
@@ -208,10 +221,10 @@ public class BCWallet extends BCClient {
             byte[] data = (TRANSACTIONSTARTBROADCAST + ":" + b.toString()).getBytes();
 
             DatagramPacket packet = new DatagramPacket(
-                data,
-                data.length,
-                InetAddress.getByName(MULTICAST_GROUP_ADDRESS),
-                MINERRECEIVEPORT
+                    data,
+                    data.length,
+                    InetAddress.getByName(MULTICAST_GROUP_ADDRESS),
+                    MINERRECEIVEPORT
             );
 
             System.out.println("New Block");
@@ -225,7 +238,7 @@ public class BCWallet extends BCClient {
     /**
      * Adiciona um par à lista desta carteira
      *
-     * @param HashID  Id do par
+     * @param HashID Id do par
      * @param address Endereco eletronico do par
      */
     @Override
@@ -307,19 +320,19 @@ public class BCWallet extends BCClient {
         StringBuilder ans = new StringBuilder();
         for (Block b : chain.getAllBlocksFromUser(hashID)) {
             ans.append("Transação:").append(System.lineSeparator())
-                .append("    Alvo: ").append(b.target()).append(System.lineSeparator())
-                .append("    Value: ").append(b.Value())
-                .append("    Change: ").append(b.change()).append(System.lineSeparator())
-                .append("Hash:").append(b.Hash()).append(System.lineSeparator())
-                .append("Status: Confirmada").append(System.lineSeparator());
+                    .append("    Alvo: ").append(b.target()).append(System.lineSeparator())
+                    .append("    Value: ").append(b.Value())
+                    .append("    Change: ").append(b.change()).append(System.lineSeparator())
+                    .append("Hash:").append(b.Hash()).append(System.lineSeparator())
+                    .append("Status: Confirmada").append(System.lineSeparator());
         }
         for (Block b : unconfirmedTransactions) {
             ans.append("Transação:").append(System.lineSeparator())
-                .append("    Alvo: ").append(b.target()).append(System.lineSeparator())
-                .append("    Value: ").append(b.Value())
-                .append("    Change: ").append(b.change()).append(System.lineSeparator())
-                .append("Hash:").append(b.Hash()).append(System.lineSeparator())
-                .append("Status: Pendente").append(System.lineSeparator());
+                    .append("    Alvo: ").append(b.target()).append(System.lineSeparator())
+                    .append("    Value: ").append(b.Value())
+                    .append("    Change: ").append(b.change()).append(System.lineSeparator())
+                    .append("Hash:").append(b.Hash()).append(System.lineSeparator())
+                    .append("Status: Pendente").append(System.lineSeparator());
         }
         for (Block b : chain.getAllBlocksToUser(hashID)) {
             String owner = b.ID();
@@ -327,9 +340,9 @@ public class BCWallet extends BCClient {
                 owner = "<Matriz>";
             }
             ans.append("Transação:").append(System.lineSeparator())
-                .append("    Dono: ").append(owner).append(System.lineSeparator())
-                .append("    Value: ").append(b.Value()).append(System.lineSeparator())
-                .append("    Hash: ").append(b.Hash()).append(System.lineSeparator());
+                    .append("    Dono: ").append(owner).append(System.lineSeparator())
+                    .append("    Value: ").append(b.Value()).append(System.lineSeparator())
+                    .append("    Hash: ").append(b.Hash()).append(System.lineSeparator());
         }
 
         return ans.toString();

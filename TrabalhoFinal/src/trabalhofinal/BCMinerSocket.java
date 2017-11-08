@@ -41,8 +41,9 @@ public class BCMinerSocket implements Runnable {
                 DatagramPacket p = new DatagramPacket(buf, buf.length);
                 try {
                     socket.receive(p);
-                } catch(Exception e){
-                    
+                } catch(Exception e){;
+                    yield();
+                    continue;
                 }
                 
                 byte[] r;

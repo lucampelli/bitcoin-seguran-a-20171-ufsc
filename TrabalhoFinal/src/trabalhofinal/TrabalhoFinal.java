@@ -16,9 +16,9 @@ public class TrabalhoFinal {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        new Thread(BCTimestampServer.getInstance()).start();
+        //new Thread(BCTimestampServer.getInstance()).start();
         //BCWallet wallet = new BCWallet();
-        //BCMiner miner = new BCMiner();
+        BCMiner miner = new BCMiner();
     }
 
 }
