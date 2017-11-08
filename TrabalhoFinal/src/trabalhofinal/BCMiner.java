@@ -1,34 +1,23 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package trabalhofinal;
 
 import MinerUI.LoadFrame;
 import MinerUI.MinerFrame;
+
+import javax.swing.*;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
-import static java.lang.Thread.yield;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import javax.swing.JOptionPane;
-import static trabalhofinal.BCTimestampServer.MINERRECEIVEPORT;
-import static trabalhofinal.BCTimestampServer.MULTICAST_GROUP_ADDRESS;
-import static trabalhofinal.BCTimestampServer.SERVERRECEIVEPORT;
-import static trabalhofinal.BCTimestampServer.WALLETRECEIVEPORT;
+import java.util.*;
+
+import static java.lang.Thread.yield;
+import static trabalhofinal.BCTimestampServer.*;
 
 /**
- *
  * Programa Minerador
  */
 public class BCMiner extends BCClient {
@@ -71,21 +60,11 @@ public class BCMiner extends BCClient {
 
             socket = new MulticastSocket();
             socket.joinGroup(InetAddress.getByName(MULTICAST_GROUP_ADDRESS));
-            socket.setBroadcast(true);
 
             byte[] data = (BCTimestampServer.DISCOVERY + ":" + hashID).getBytes();
-            List<Short> ports = Arrays.asList(SERVERRECEIVEPORT, MINERRECEIVEPORT, WALLETRECEIVEPORT);
-            for (short port : ports) {
-                DatagramPacket packet = new DatagramPacket(
-                        data,
-                        data.length,
-                        InetAddress.getByName(MULTICAST_GROUP_ADDRESS),
-                        port
-                ); // broadcast for peers and server
-                socket.send(packet);
-            }
+            sendBroadcast(data);
 
-            System.out.println("Looking for Peers: " + socket.getLocalAddress());
+            System.out.println("Looking for Peers...");
 
             Date date = new Date();
 
@@ -96,7 +75,7 @@ public class BCMiner extends BCClient {
             long startTime = date.getTime();
 
             LoadFrame loading = new LoadFrame();
-            
+
             //Por 5 segundos espera respostas de peers ou miners ou do servidor
             while (currentTime - startTime < timeup * 1000) {
                 System.out.println("Waiting for a response");
@@ -104,6 +83,7 @@ public class BCMiner extends BCClient {
                 DatagramPacket receivePacket = new DatagramPacket(recvBuf, recvBuf.length);
                 try {
                     socket.receive(receivePacket);
+                    System.out.println("Receive packet from: " + receivePacket.getSocketAddress());
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
                     currentTime = new Date().getTime();
@@ -168,6 +148,19 @@ public class BCMiner extends BCClient {
 
     }
 
+    public void sendBroadcast(byte[] data) throws IOException {
+        List<Short> ports = Arrays.asList(SERVERRECEIVEPORT, MINERRECEIVEPORT, WALLETRECEIVEPORT);
+        for (short port : ports) {
+            DatagramPacket packet = new DatagramPacket(
+                data,
+                data.length,
+                InetAddress.getByName(MULTICAST_GROUP_ADDRESS),
+                port
+            ); // broadcast for peers and server
+            socket.send(packet);
+        }
+    }
+
     /**
      * Envia uma mensagem para receber a blockchain do servidor
      *
@@ -204,8 +197,8 @@ public class BCMiner extends BCClient {
         String ans = "";
         if (working != null) {
             ans = "Hash: " + working.Hash() + System.lineSeparator() + "Owner: " + working.ID()
-                    + System.lineSeparator() + "Target: " + working.target() + System.lineSeparator()
-                    + "Nonce: " + nonce;
+                + System.lineSeparator() + "Target: " + working.target() + System.lineSeparator()
+                + "Nonce: " + nonce;
         }
         return ans;
     }
@@ -213,7 +206,7 @@ public class BCMiner extends BCClient {
     /**
      * Adiciona uma nova conexão as existentes
      *
-     * @param HashID ID do peer a adicionar
+     * @param HashID  ID do peer a adicionar
      * @param address Endereço da net do peer
      */
     @Override
@@ -300,18 +293,7 @@ public class BCMiner extends BCClient {
             working.timeStamp(new Date(), chain.Head().Hash());
             byte[] message = (BCTimestampServer.TRANSACTIONCONFIRMEDBROADCAST + ":" + working.toString()).getBytes();
 
-            for (InetAddress a : peers.values()) {
-                packet = new DatagramPacket(message, message.length, a, BCTimestampServer.WALLETRECEIVEPORT);
-                socket.send(packet);
-            }
-
-            for (InetAddress a : miners.values()) {
-                packet = new DatagramPacket(message, message.length, a, BCTimestampServer.MINERRECEIVEPORT);
-                socket.send(packet);
-            }
-
-            packet = new DatagramPacket(message, message.length, server, BCTimestampServer.SERVERRECEIVEPORT);
-            socket.send(packet);
+            sendBroadcast(message);
 
             long intervalo = working.getTime() - lastArrived;
             media = (media + intervalo) / 2;
@@ -358,9 +340,9 @@ public class BCMiner extends BCClient {
      * @param diff a dificuldade do teste
      * @return Uma string com tantos 0s quanto a dificuldade
      */
-    private String POWdiff(int diff){
+    private String POWdiff(int diff) {
         StringBuilder ans = new StringBuilder();
-        for (int i = 0; i < diff; i++){
+        for (int i = 0; i < diff; i++) {
             ans.append("0");
         }
         return ans.toString().trim();
@@ -392,20 +374,9 @@ public class BCMiner extends BCClient {
             DatagramPacket packet;
             byte[] message = (BCTimestampServer.TRANSACTIONDENIEDBROADCAST + ":" + b.toString()).getBytes();
 
-            for (InetAddress a : peers.values()) {
-                packet = new DatagramPacket(message, message.length, a, BCTimestampServer.WALLETRECEIVEPORT);
-                socket.send(packet);
-            }
+            sendBroadcast(message);
 
-            for (InetAddress a : miners.values()) {
-                packet = new DatagramPacket(message, message.length, a, BCTimestampServer.MINERRECEIVEPORT);
-                socket.send(packet);
-            }
-
-            packet = new DatagramPacket(message, message.length, server, BCTimestampServer.SERVERRECEIVEPORT);
-            socket.send(packet);
-            
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

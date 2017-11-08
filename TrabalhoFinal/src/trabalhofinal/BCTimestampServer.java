@@ -1,20 +1,17 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package trabalhofinal;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 
 /**
- *
  * Servidor timesstamp que mantém uma cópia atualizada da blockchain
  */
 public class BCTimestampServer implements Runnable {
 
-    
+
     private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
 
     /**
@@ -46,13 +43,13 @@ public class BCTimestampServer implements Runnable {
     public final static short CHAINRESPONSE = 20;
     public final static short PEERRESPONSE = 30;
     public final static short MINERRESPONSE = 40;
-    
+
     public static int matrixCount = 0;
 
     public static BCTimestampServer INSTANCE;
 
     public BlockChain chain;
-    
+
     private MulticastSocket socketRec;
     private DatagramSocket socketSend;
 
@@ -67,7 +64,6 @@ public class BCTimestampServer implements Runnable {
         try {
             socketRec = new MulticastSocket(SERVERRECEIVEPORT);
             socketRec.joinGroup(InetAddress.getByName(MULTICAST_GROUP_ADDRESS));
-            socketRec.setBroadcast(true);
             socketSend = new DatagramSocket(SERVERSENDPORT);
             chain = new BlockChain();
         } catch (IOException e) {
@@ -87,7 +83,7 @@ public class BCTimestampServer implements Runnable {
                 socketRec.receive(packet);
 
                 //packet received
-                System.out.println("Received Packet from: " + packet.getAddress().getHostAddress() + ":" + packet.getPort());
+                System.out.println("Received Packet from: " + packet.getSocketAddress());
                 System.out.println("Saying:" + new String(packet.getData()));
 
                 Thread response = new Thread(new BCServerHandler(packet, socketSend, chain));

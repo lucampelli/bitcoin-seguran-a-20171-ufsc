@@ -36,7 +36,6 @@ public class BCMinerSocket implements Runnable {
             socket = new MulticastSocket(MINERRECEIVEPORT);
             socket.joinGroup(InetAddress.getByName(MULTICAST_GROUP_ADDRESS));
             socket.setSoTimeout(1000);
-            socket.setBroadcast(true);
             while (true) {
                 byte[] buf = new byte[15000];
                 DatagramPacket p = new DatagramPacket(buf, buf.length);

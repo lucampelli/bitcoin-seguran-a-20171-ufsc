@@ -1,19 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package trabalhofinal;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.net.*;
 
 /**
  * Thread que cuida de responder as mensagens do servidor
@@ -90,7 +80,9 @@ public class BCServerHandler implements Runnable {
 
         if (response.equals(BCTimestampServer.SERVERDISCOVERYRESPONSE + "")) {
             byte[] resBytes = response.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket(resBytes, resBytes.length, commPacket.getAddress(), commPacket.getPort());
+
+            System.out.println("Sending DISCOVERY response to: " + commPacket.getSocketAddress());
+            DatagramPacket sendPacket = new DatagramPacket(resBytes, resBytes.length, commPacket.getSocketAddress());
             try {
                 socket.send(sendPacket);
             } catch (Exception ex) {
@@ -118,6 +110,8 @@ public class BCServerHandler implements Runnable {
             //retrieves byte array
             byte[] sendBuf = byteStream.toByteArray();
             DatagramPacket sendPacket = new DatagramPacket(sendBuf, sendBuf.length, address, port);
+
+            System.out.println("Sending requested blockchain to: " + commPacket.getSocketAddress());
             socket.send(sendPacket);
             os.close();
         } catch (Exception e) {

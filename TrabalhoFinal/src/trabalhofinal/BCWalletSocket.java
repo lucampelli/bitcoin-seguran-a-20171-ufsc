@@ -37,7 +37,6 @@ public class BCWalletSocket implements Runnable {
             socket = new MulticastSocket(WALLETRECEIVEPORT);
             socket.joinGroup(InetAddress.getByName(MULTICAST_GROUP_ADDRESS));
             socket.setSoTimeout(1000);
-            socket.setBroadcast(true);
             while (true) {
                 byte[] buf = new byte[15000];
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
