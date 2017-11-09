@@ -29,9 +29,11 @@ public class BlockChain implements Serializable {
      * @param block Bloco adicionado
      */
     public void addBlock(Block block) {
+
         if(chain.containsKey(block.Hash())){
             return;
         }
+
         head = block;
         chain.put(block.Hash(), block);
     }
@@ -59,7 +61,7 @@ public class BlockChain implements Serializable {
      * @return 
      */
     public ArrayList<Block> getAllBlocksFromUser(String ID) {
-        ArrayList<Block> ans = new ArrayList();
+        ArrayList<Block> ans = new ArrayList<>();
 
         for (Block b : chain.values()) {
             if (b.ID().equals(ID)) {
@@ -94,7 +96,7 @@ public class BlockChain implements Serializable {
      */
     public ArrayList<Block> getAllBlocksToUser(String HashID) {
 
-        ArrayList<Block> ans = new ArrayList();
+        ArrayList<Block> ans = new ArrayList<>();
 
         for (Block b : chain.values()) {
             if (b.target().equals(HashID)) {

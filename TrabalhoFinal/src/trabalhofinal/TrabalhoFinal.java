@@ -16,9 +16,28 @@ public class TrabalhoFinal {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        //new Thread(BCTimestampServer.getInstance()).start();
-        //BCWallet wallet = new BCWallet();
-        BCMiner miner = new BCMiner();
-    }
 
+        if (args.length != 1) {
+            System.out.println("Digite uma das opções abaixo:");
+            System.out.println("1 - Server");
+            System.out.println("2 - Wallet");
+            System.out.println("3 - Miner");
+            System.exit(-1);
+        }
+
+        switch (Integer.parseInt(args[0])) {
+            case 1:
+                new Thread(BCTimestampServer.getInstance()).start();
+                break;
+            case 2:
+                new BCWallet();
+                break;
+            case 3:
+                new BCMiner();
+                break;
+            default:
+                System.out.println("Opção não contemplada.");
+                System.exit(-2);
+        }
+    }
 }

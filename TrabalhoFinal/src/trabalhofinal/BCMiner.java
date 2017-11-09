@@ -135,10 +135,10 @@ public class BCMiner extends BCClient {
                     working = pending.get(0);
                 }
             } else if (proofOfWork((int) dificuldade) != -1) {
+                chain.addBlock(working);
+                pending.removeIf((Block p) -> p.Hash().equals(working.Hash()));
 
                 System.out.println("POW success");
-                chain.addBlock(working);
-                pending.remove(working);
                 sendBlockValidated();
                 working = null;
                 System.out.println(chain.toStringLines());
@@ -152,10 +152,10 @@ public class BCMiner extends BCClient {
         List<Short> ports = Arrays.asList(SERVERRECEIVEPORT, MINERRECEIVEPORT, WALLETRECEIVEPORT);
         for (short port : ports) {
             DatagramPacket packet = new DatagramPacket(
-                    data,
-                    data.length,
-                    InetAddress.getByName(MULTICAST_GROUP_ADDRESS),
-                    port
+                data,
+                data.length,
+                InetAddress.getByName(MULTICAST_GROUP_ADDRESS),
+                port
             ); // broadcast for peers and server
             socket.send(packet);
         }
@@ -197,8 +197,8 @@ public class BCMiner extends BCClient {
         String ans = "";
         if (working != null) {
             ans = "Hash: " + working.Hash() + System.lineSeparator() + "Owner: " + working.ID()
-                    + System.lineSeparator() + "Target: " + working.target() + System.lineSeparator()
-                    + "Nonce: " + nonce;
+                + System.lineSeparator() + "Target: " + working.target() + System.lineSeparator()
+                + "Nonce: " + nonce;
         }
         return ans;
     }
@@ -206,7 +206,7 @@ public class BCMiner extends BCClient {
     /**
      * Adiciona uma nova conexão as existentes
      *
-     * @param HashID ID do peer a adicionar
+     * @param HashID  ID do peer a adicionar
      * @param address Endereço da net do peer
      */
     @Override
@@ -267,17 +267,9 @@ public class BCMiner extends BCClient {
      * @param b o bloco validado
      */
     public void receiveBlockValidatedRequest(Block b) {
+        pending.removeIf((Block p) -> p.Hash().equals(b.Hash()));
         chain.addBlock(b);
-        int index = 0;
-        
-        for (Block block : pending) {
-            if (block.Hash().equals(b.Hash())) {
-                pending.remove(index);
-                break;
-            }
-            index++;
-        }
-        
+
         if (working != null && working.Hash().equals(b.Hash())) {
             working = null;
         }
@@ -382,14 +374,8 @@ public class BCMiner extends BCClient {
      * @param b o bloco negado
      */
     public void receiveDeniedBlock(Block b) {
-        int index = 0;
-        for (Block block : pending) {
-            if (block.Hash().equals(b.Hash())) {
-                pending.remove(index);
-                break;
-            }
-            index++;
-        }
+        pending.removeIf((Block p) -> p.Hash().equals(b.Hash()));
+
         if (working != null && working.Hash().equals(b.Hash())) {
             working = null;
         }
