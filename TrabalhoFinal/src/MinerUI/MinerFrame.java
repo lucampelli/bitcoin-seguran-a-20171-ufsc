@@ -120,6 +120,7 @@ public class MinerFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
         this.setVisible(false);
         this.dispose();
+        System.exit(0);
     }//GEN-LAST:event_CloseButtonActionPerformed
 
 

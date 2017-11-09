@@ -1,25 +1,12 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package trabalhofinal;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.net.*;
 
 /**
- *
- * @author luca Thread que cuida de responder as mensagens do servidor
+ * Thread que cuida de responder as mensagens do servidor
  */
 public class BCServerHandler implements Runnable {
 
@@ -28,13 +15,14 @@ public class BCServerHandler implements Runnable {
     BlockChain chain;
     String response = "";
     String command = "";
-    
+
     /**
      * Handler para que o servidor nao pare
+     *
      * @param comPacket
      * @param socket
      * @throws SocketException
-     * @throws UnknownHostException 
+     * @throws UnknownHostException
      */
     public BCServerHandler(DatagramPacket comPacket, DatagramSocket socket) throws SocketException, UnknownHostException {
         this.socket = socket;
@@ -44,10 +32,11 @@ public class BCServerHandler implements Runnable {
 
     /**
      * Handler para que o servidor nao pare, já com uma chain criada
+     *
      * @param comPacket
      * @param socket
      * @throws SocketException
-     * @throws UnknownHostException 
+     * @throws UnknownHostException
      */
     public BCServerHandler(DatagramPacket comPacket, DatagramSocket socket, BlockChain chain) throws SocketException, UnknownHostException {
         this.socket = socket;
@@ -64,7 +53,7 @@ public class BCServerHandler implements Runnable {
             case BCTimestampServer.DISCOVERY:
                 boolean t = false;
                 for (Block b : chain.getAllBlocksToUser(new String(commPacket.getData()).trim().split(":")[1])) {
-                    if (b.ID() == "") {
+                    if (b.ID().isEmpty()) {
                         t = true;
                     }
                 }
@@ -91,7 +80,9 @@ public class BCServerHandler implements Runnable {
 
         if (response.equals(BCTimestampServer.SERVERDISCOVERYRESPONSE + "")) {
             byte[] resBytes = response.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket(resBytes, resBytes.length, commPacket.getAddress(), commPacket.getPort());
+
+            System.out.println("Sending DISCOVERY response to: " + commPacket.getSocketAddress());
+            DatagramPacket sendPacket = new DatagramPacket(resBytes, resBytes.length, commPacket.getSocketAddress());
             try {
                 socket.send(sendPacket);
             } catch (Exception ex) {
@@ -103,31 +94,24 @@ public class BCServerHandler implements Runnable {
 
     /**
      * Função que envia um objeto à um par
-     * @param o
-     * @param hostname
-     * @param port
-     * @throws IOException 
-     */
-    public void sendTo(Object o, String hostname, int port) throws IOException {
-        sendTo(o, InetAddress.getByName(hostname), port);
-    }
-
-    /**
-     * Função que envia um objeto à um par
-     * @param o
-     * @param address
-     * @param port 
+     *
+     * @param o       Objeto que será serializado
+     * @param address endereço do destinatário
+     * @param port    porta do processo do destinatário
      */
     public void sendTo(Object o, InetAddress address, int port) {
         try (
-                ByteArrayOutputStream byteStream = new ByteArrayOutputStream(50 * 1024);
-                ObjectOutputStream os = new ObjectOutputStream(new BufferedOutputStream(byteStream))) {
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream(50 * 1024);
+            ObjectOutputStream os = new ObjectOutputStream(new BufferedOutputStream(byteStream))
+        ) {
             os.flush();
             os.writeObject(o);
             os.flush();
             //retrieves byte array
             byte[] sendBuf = byteStream.toByteArray();
             DatagramPacket sendPacket = new DatagramPacket(sendBuf, sendBuf.length, address, port);
+
+            System.out.println("Sending requested blockchain to: " + commPacket.getSocketAddress());
             socket.send(sendPacket);
             os.close();
         } catch (Exception e) {

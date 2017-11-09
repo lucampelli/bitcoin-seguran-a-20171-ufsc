@@ -5,19 +5,21 @@
  */
 package trabalhofinal;
 
-import static java.lang.Thread.yield;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.MulticastSocket;
+
+import static java.lang.Thread.yield;
+import static trabalhofinal.BCTimestampServer.*;
 
 /**
  *
- * @author luca Thread para os mineradores receberem broadcasts de novos blocos
+ * Thread para os mineradores receberem broadcasts de novos blocos
  * e peers
  */
 public class BCMinerSocket implements Runnable {
 
-    DatagramSocket socket;
+    MulticastSocket socket;
     BCMiner client;
 
     /**
@@ -31,39 +33,40 @@ public class BCMinerSocket implements Runnable {
     @Override
     public void run() {
         try {
-            socket = new DatagramSocket(BCTimestampServer.MINERRECEIVEPORT, InetAddress.getByName("0.0.0.0"));
+            socket = new MulticastSocket(MINERRECEIVEPORT);
+            socket.joinGroup(InetAddress.getByName(MULTICAST_GROUP_ADDRESS));
             socket.setSoTimeout(1000);
-            socket.setBroadcast(true);
             while (true) {
                 byte[] buf = new byte[15000];
                 DatagramPacket p = new DatagramPacket(buf, buf.length);
                 try {
                     socket.receive(p);
-                } catch(Exception e){
-                    
+                } catch(Exception e){;
+                    yield();
+                    continue;
                 }
                 
                 byte[] r;
 
                 String[] data = new String(p.getData()).trim().split(":");
 
-                if (data[0].equals(BCTimestampServer.DISCOVERY + "")) {
+                if (data[0].equals(DISCOVERY + "")) {
                     System.out.println("Client Received Discovery");
                     client.addPeer(data[1], p.getAddress());
-                    r = (BCTimestampServer.MINERRESPONSE + ":" + client.ID()).getBytes();
+                    r = (MINERRESPONSE + ":" + client.ID()).getBytes();
                     DatagramPacket response = new DatagramPacket(r, r.length, p.getAddress(), p.getPort());
                     socket.send(response);
                 }
-                if (data[0].equals(BCTimestampServer.TRANSACTIONSTARTBROADCAST + "")) {
+                if (data[0].equals(TRANSACTIONSTARTBROADCAST + "")) {
                     System.out.println("Miner Received New Transaction ");
                     client.receiveBlockValidationRequest(new Block(data[1]));
                 }
-                if(data[0].equals(BCTimestampServer.TRANSACTIONCONFIRMEDBROADCAST + "")){
+                if(data[0].equals(TRANSACTIONCONFIRMEDBROADCAST + "")){
                     System.out.println("Miner Received Transaction Confirmation");
                     client.receiveBlockValidatedRequest(new Block(data[1]));
                 }
                 
-                if(data[0].equals(BCTimestampServer.TRANSACTIONDENIEDBROADCAST + "")){
+                if(data[0].equals(TRANSACTIONDENIEDBROADCAST + "")){
                     System.out.println("Miner Received Note of a Denied Transaction");  //Untested
                     client.receiveDeniedBlock(new Block(data[1]));
                 }
