@@ -137,9 +137,9 @@ public class BCMiner extends BCClient {
             } else if (proofOfWork((int) dificuldade) != -1) {
 
                 System.out.println("POW success");
-                sendBlockValidated();
                 chain.addBlock(working);
                 pending.remove(working);
+                sendBlockValidated();
                 working = null;
                 System.out.println(chain.toStringLines());
             }
@@ -268,10 +268,19 @@ public class BCMiner extends BCClient {
      */
     public void receiveBlockValidatedRequest(Block b) {
         chain.addBlock(b);
+        int index = 0;
+        
+        for (Block block : pending) {
+            if (block.Hash().equals(b.Hash())) {
+                pending.remove(index);
+                break;
+            }
+            index++;
+        }
+        
         if (working != null && working.Hash().equals(b.Hash())) {
             working = null;
         }
-        pending.remove(b);
 
         long intervalo = b.getTime() - lastArrived;
         media = (media + intervalo) / 2;
@@ -292,8 +301,6 @@ public class BCMiner extends BCClient {
             DatagramPacket packet;
             working.timeStamp(new Date(), chain.Head().Hash());
             byte[] message = (BCTimestampServer.TRANSACTIONCONFIRMEDBROADCAST + ":" + working.toString()).getBytes();
-
-            System.out.println(working == null);
 
             long intervalo = working.getTime() - lastArrived;
             media = (media + intervalo) / 2;
@@ -375,10 +382,17 @@ public class BCMiner extends BCClient {
      * @param b o bloco negado
      */
     public void receiveDeniedBlock(Block b) {
+        int index = 0;
+        for (Block block : pending) {
+            if (block.Hash().equals(b.Hash())) {
+                pending.remove(index);
+                break;
+            }
+            index++;
+        }
         if (working != null && working.Hash().equals(b.Hash())) {
             working = null;
         }
-        pending.remove(b);
     }
 
     public void sendDeniedBroadcast(Block b) {

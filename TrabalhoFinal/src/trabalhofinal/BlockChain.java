@@ -29,6 +29,9 @@ public class BlockChain implements Serializable {
      * @param block Bloco adicionado
      */
     public void addBlock(Block block) {
+        if(chain.containsKey(block.Hash())){
+            return;
+        }
         head = block;
         chain.put(block.Hash(), block);
     }
