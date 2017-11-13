@@ -1,0 +1,52 @@
+Apresentação: <Nomes> 
+Este é o trabalho final da disciplina de Segurança Computacional do Curso de Ciências da computação da UFSC do segundo semestre de 2017.
+
+Nosso tema é criar nossa própria criptomoeda virtual.
+
+Uma criptomoeda é um tipo de dinheiro virtual não centralizado que funciona igual ao papel moeda podendo ser trocado por bens e serviços.
+
+Porém a maior diferença etsa no fato de que suas transações e carteiras são virtuais em vez de físicas.
+
+O bitcoin é um tipo de criptomeoeda que se popularizou e hoje possui um valor de mercado significativo. Ele não possui uma instituição que controle a emissão
+	nem as transações sobre a moeda sendo totalmente descentralizado e de código aberto.
+
+Mas então como funciona o bitcoin? Se não tem ninguém que o controle, como evitar que alguém diga que possui um milhão de bitcoins e gastar à vontade?
+
+Por não possuir uma instituição que controle a emissão ou as transações, o bitcoin não possui certas limitações que uma instituição impõe sobre a moeda, como taxas e limites de câmbio.
+Mas isto implica na segunda pergunta, como manter a moeda segura e consistente?
+
+O bitcoin faz isso se utilizando de um sistema de armazenamento e validação robusto chamado de Blockchain.
+
+A Blockchain é uma base de dados que, como a própria tradução do nome já informa, funciona como uma cadeia de blocos. 
+Cada bloco armazena uma ou várias transações diferentes, além de cada bloco saber qual o seu antecessor na cadeia, e assim formam a blockchain. 
+
+Para um bloco entrar na blockchain, ele primeiro deve ser validado, e checado por inconsistências.
+Um sistema de votação é utilizado para validar os blocos, porém se fosse um esquema de um voto por IP, como normalmente é encontrado em algumas redes,
+	este sistema seria falho caso um usuário malicioso possuísse vários endereços em sua posse.
+
+Por isso, o sistema utilizado se chama proof-of-work (POW), ou prova de trabalho. 
+Ele consiste em um quebra-cabeça de dificuldade computacional elevada, que deve ser executado e provado para que um bloco seja validado, tornando assim um voto por CPU.
+
+O processo de realizar a POW é chamado de Mineração de Bitcoins, e possui um incentivo monetário a quem descobrir a solução para o bloco corrente, aumentando as chances de muitos computadores estarem "minerando", e portanto garantindo que uma transação será validada, e dificultando ainda mais para um atacante ultrapassar a corrente verdadeira.
+
+Desta forma, após validado, um bloco é adicionado à cadeia.
+Cada bloco possui também uma referência do bloco anterior a ele na cadeia, permitindo que se navegue pela corrente, e também que se prove a validação de vários outros blocos antes dele. Esta referência se dá na forma de uma Hash, o que também impede que um atacante modifique o conteúdo de um bloco já validado, pois ele teria de atualizar todas as hashs dos blocos posteriores para que este bloco alterado fosse considerado válido, e desta forma, executar a prova de trabalho para cada um, para o qual seriam necessários 51 por cento do poder computacional de toda a rede para que a corrente alterada ultrapassasse a corrente verdadeira. Isto garante a segurança e a prova de que o bloco foi validado além de marcar a ordem das transações que ocorreram permitindo um log da cadeia.
+
+Nosso trabalho tem como fundamentação teórica o artigo \cite{nakamoto2008bitcoin} sobre o bitcoin, e o artigo eletrônico \cite{howBitcoinWorks} sobre o funcionamento do protocolo. 
+Nós seguimos o segundo para que a nossa criptomoeda funcionasse corretamente.
+
+Para o desenvolvimento da nossa própria cripto-moeda,desenvolvemos o programa com três módulos distintos, a carteira, o minerador, e o servidor. 
+
+A carteira possui o balanço do usuário, a cadeia de transações referidas a ele, e permite o usuário criar novas transações. 
+
+O minerador apenas faz jus a seu nome, este módulo, quando em execução, aguarda que novas transações sejam criadas e trabalha em cima do POW até que as complete.
+
+Já o servidor existe para manter a blockchain atualizada, embora todos os módulos possuam uma cópia da blockchain, se nenhum par estiver logado na rede, não há de onde puxar a blockchain mais atualizada. Então enquanto ligado, ele mantém guardado o registro mais atualizado da blockchain.
+
+O nosso trabalho por motivos de simplicidade funciona apenas em redes LAN, mas poderia ser escalado para funcionar por toda a internet com é o bitcoin.
+
+Os dois módulos interativos, carteira e minerador, possuem duas partes excluindo a parte gráfica, que são o cliente e o socket.
+
+O cliente cuida das operações que são necessárias a cada módulo, e cuida de enviar as mensagens de onde a iniciativa parte do cliente, já o socket é uma thread separada, cuja função é cuidar de receber as mensagens enviadas pela rede, enviar para o cliente para que sejam resolvidas, prover as respostas adequadas quando necessário, e então voltar a escutar a rede, assim garantindo que nenhuma mensagem seja perdida.
+
+Demonstração:
